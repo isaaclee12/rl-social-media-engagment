@@ -1,5 +1,6 @@
 import tweepy
 import time
+import random
 from datetime import datetime, timedelta
 import pytz
 
@@ -16,14 +17,12 @@ def get_current_datetime():
     # print(d_aware.tzinfo)
 
     # Move ahead four to get from EST -> GMT
-    datetime_gmt = datetime + timedelta(hours = 4)
+    datetime_gmt = datetime + timedelta(hours=4)
 
     # Turn datetime object into string tuple & return it
     datetime = datetime_gmt.strftime("%Y-%m-%d %H:%M:%S")
 
-    datetime_tuple = datetime.split()
-    current_date = datetime_tuple[0]
-    current_time = datetime_tuple[1]
+    current_date, current_time = datetime.split()
     # print("\nCurrent Date and Time:", current_date, current_time)
 
     return current_date, current_time
@@ -120,9 +119,7 @@ def get_feed_data(api):
     running = True
 
     # Set time delay between each iteration.
-    SLEEP_TIME = 5
-
-    # Make how old a tweet can be to still be interacted with this much.
+    SLEEP_TIME = 0.75# Make how old a tweet can be to still be interacted with this much.
     TWEET_AGE_MAX = SLEEP_TIME
 
     while (running):
@@ -238,7 +235,7 @@ def extract_tweets_from_trending(api):
     trends = api.trends_place(23424977)
 
     #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
-    SLEEP_TIME = 0.5
+    SLEEP_TIME = 0.75
     time.sleep(SLEEP_TIME)
 
     # Extract trends list from dict
@@ -306,7 +303,7 @@ def action1_trending(api):
     trends = api.trends_place(23424977)
 
     #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
-    SLEEP_TIME = 0.5
+    SLEEP_TIME = 0.75
     time.sleep(SLEEP_TIME)
 
     # Extract trends list from dict
@@ -355,6 +352,101 @@ def action1_trending(api):
                 time.sleep(SLEEP_TIME)
 
 
+def action2_following(api):
+    '''
+    Choose someone the bot is following.
+    Like and retweet that user's most recent tweets.
+    Follow some of that user's current followers.
+    '''
+
+    # Open list of followers
+    following_archive = open("following.txt", "r")
+
+    # Get array
+    following_array_from_file = []
+    line = following_archive.readline()
+    while line != "":
+        following_array_from_file.append(line)
+        line = following_archive.readline()
+
+    #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
+    SLEEP_TIME = 0.75
+    time.sleep(SLEEP_TIME)
+
+    # Get list of users the agent is following
+    following_list = api.friends()
+
+    # Print list of users the agent is following
+    # for user in following_list:
+    #     print(user.screen_name)
+
+    # Randomly choose which user to engage with
+    # TODO: Add greedy version
+    selected_user_index = random.randint(0, len(following_list) - 1)
+    selected_user = following_list[selected_user_index]
+
+    print("SELECTED USER: ", selected_user.screen_name)
+
+
+    # Prevent Rate Limit
+    time.sleep(SLEEP_TIME)
+
+    # Get list of users the selected user is following
+    selected_user_following = api.friends(selected_user.id, count=10)
+
+    # Print list of users the selected user is following
+    # Follow some people who that user is following
+    for user in selected_user_following:
+
+        # Check if already following user
+        if user.screen_name in following_array_from_file:
+            print("Already following @", user.screen_name, sep="")
+
+        # If not following yet, follow
+        else:
+            print("Following @", user.screen_name, sep="")
+
+            # Prevent Rate Limit
+            time.sleep(SLEEP_TIME)
+
+            # Follow request
+            api.create_friendship(user.id)
+
+    # Prevent Rate Limit
+    time.sleep(SLEEP_TIME)
+
+    # Get that user's latest tweets
+    selected_user_timeline = api.user_timeline(selected_user.id, count=10)
+
+    # Like and retweet the that user's 10 latest tweets
+    for tweet in selected_user_timeline:
+
+        # Prevent Rate Limit
+        time.sleep(SLEEP_TIME)
+
+        # Like
+        try:
+            print("Liking tweet:", tweet.text)
+            api.create_favorite(tweet.id)
+        except tweepy.TweepyException:
+            print("Could not like tweet")
+
+        # Prevent Rate Limit
+        time.sleep(SLEEP_TIME)
+
+        # Retweet
+        try:
+            print("Retweeting:", tweet.text)
+            api.retweet(tweet.id)
+        except tweepy.TweepyException:
+            print("Could not retweet tweet")
+
+    # Close file
+    following_archive.close()
+
+    # end
+
+
 def main():
 
     # BOT USERNAME: @egg69017129
@@ -392,20 +484,44 @@ def main():
     # Get current datetime tuple
     current_datetime = get_current_datetime
 
-    # Get tweets, mentions, and retweets TODO: rename this function
-    # TODO: Uncomment if using
-    # get_feed_data(api)
 
-    # Get trends and popular tweets for those trends
-    # TODO: Uncomment if using
-    extract_tweets_from_trending(api)
+    # Begin Actions:
+    running = True
 
-    # Action Type 1: Follow based on tweets on trending topics
-    # TODO: Uncomment if using
-    # action1_trending(api)
+    while running:
+        try:
+            # Get tweets, mentions, and retweets TODO: rename this function
+            # TODO: Uncomment if using
+            # get_feed_data(api)
 
-    # Action Type 2:
-    #
+            # Get trends and popular tweets for those trends
+            # TODO: Uncomment if using
+            # extract_tweets_from_trending(api)
+
+            # Action Type 1: Action is based on tweets on trending topics
+            # TODO: Uncomment if using
+            # action1_trending(api)
+
+            # Action Type 2: Action is based on someone the bot is following
+            # TODO: Uncomment if using
+            action2_following(api)
+
+        # Sleeps the agent for 15 minutes when rate limited
+        except tweepy.RateLimitError:
+            MINUTES_TO_SLEEP = 5
+            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
+
+            # Write rate limit to file
+            rate_limit_log = open("rate_limit_log.txt", "a")
+            time_of_rate_limit = get_current_datetime()
+            out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
+            print(out_string)
+            rate_limit_log.write(out_string)
+            rate_limit_log.close()
+
+            time.sleep(MINUTES_TO_SLEEP * 60)
+
+
 
 
 

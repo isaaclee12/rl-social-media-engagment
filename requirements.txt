@@ -1,4 +1,6 @@
 tweepy
-time
 datetime
 pytz
+tensorflow
+tf-agents
+tensorflow-gpu
