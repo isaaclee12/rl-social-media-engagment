@@ -444,14 +444,153 @@ def action2_following(api):
     # Close file
     following_archive.close()
 
+
+def action3_random_query(api):
+    '''
+    Make a random word search based on a dictionary of top 500 words used on Twitter
+    Like and retweet with top tweets on those topics
+    Follow people who made those tweets
+    '''
+
+    # Set up dictionary
+    # Have to do this in-function to make sure file gets closed at the end b/c infinite loop
+    words_file = open("most_used_words.txt", "r")
+    line = words_file.readline()
+
+    words = []
+
+    while line != "":
+
+        words.append(line)
+
+        line = words_file.readline()
+
+    index = random.randint(0, len(words) - 1)
+    query = words[index]
+
+    print("QUERY:", query)
+
+
+    # Open list of followers
+    following_archive = open("following.txt", "r")
+
+    # Get array
+    following_array_from_file = []
+    line = following_archive.readline()
+    while line != "":
+        following_array_from_file.append(line)
+        line = following_archive.readline()
+
+    #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
+    SLEEP_TIME = 0.75
+    time.sleep(SLEEP_TIME)
+
+    # Search top 10 tweets with query
+    search = api.search(query, count=10)
+
+    for tweet in search:
+
+        # Check if already following user
+        if tweet.user.screen_name in following_array_from_file:
+            print("Already following @", tweet.user.screen_name, sep="")
+
+        # If not following yet, follow
+        else:
+            print("Following @", tweet.user.screen_name, sep="")
+
+            # Prevent Rate Limit
+            time.sleep(SLEEP_TIME)
+
+            # Follow request
+            api.create_friendship(tweet.user.id)
+
+        # Prevent Rate Limit
+        time.sleep(SLEEP_TIME)
+
+        # Like
+        try:
+            print("Liking tweet:", tweet.text)
+            api.create_favorite(tweet.id)
+        except:
+            print("Could not like tweet")
+
+        # Prevent Rate Limit
+        time.sleep(SLEEP_TIME)
+
+        # Retweet
+        try:
+            print("Retweeting:", tweet.text)
+            api.retweet(tweet.id)
+        except:
+            print("Could not retweet tweet")
+
+    # Close file
+    following_archive.close()
+    words_file.close()
+
+
+def purge_tweets_and_following(api):
+
+    # Get following
+    following = api.friends(count=50)
+
+
+
+    #end
+
+
+def get_rewards(api):
+
+    followers_file = open("followers.txt", "r")
+    followers_array = []
+
+    line = followers_file.readline()
+    while line != "":
+        followers_array.append(line)
+        line = followers_file.readline()
+
+    # Get number of followers since last
+    followers = api.followers()
+
+    reward = 0
+
+    # Diff. in followers = reward
+    # Compare num followers since last action
+    old_follower_count = len(followers_array)
+    new_follower_count = len(followers)
+    if old_follower_count != new_follower_count:
+
+        reward = new_follower_count - old_follower_count
+        print("Reward =", reward)
+
+        # Reset follower txt
+        # Overwrite file
+        followers_file.close()
+        followers_file = open("followers.txt", "w")
+
+        for follower in followers:
+            followers_file.write(follower.screen_name)
+
+        return reward
+
+    # otherwise, close file and return 0
+    else:
+        followers_file.close()
+        print("Reward =", reward)
+
+        return 0
+
+
+
+    # for follower in followers:
+    #     follower.id
     # end
 
 
 def main():
 
-    # BOT USERNAME: @egg69017129
-
-    # User Keys from separate file
+    # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
+    # IMPORTANT: Keep secret user keys in separate file
     credentials = open("credentials.txt", "r")
     creds_array = []
 
@@ -484,12 +623,17 @@ def main():
     # Get current datetime tuple
     current_datetime = get_current_datetime
 
+    MINUTES_BETWEEN_ACTIONS = 1
+    TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
 
     # Begin Actions:
     running = True
 
-    while running:
+    for x in range(9):
         try:
+
+            get_rewards(api)
+
             # Get tweets, mentions, and retweets TODO: rename this function
             # TODO: Uncomment if using
             # get_feed_data(api)
@@ -504,14 +648,28 @@ def main():
 
             # Action Type 2: Action is based on someone the bot is following
             # TODO: Uncomment if using
-            action2_following(api)
+            # action2_following(api)
 
-        # Sleeps the agent for 15 minutes when rate limited
+            # Action Type 3: Action is based on random search query
+            # TODO: Uncomment if using
+            # action3_random_query(api)
+
+            # TODO: Decide if this function is even necessary
+            # Extra Action: Purge all tweets and following.
+            # Uncomment if using
+            # purge_tweets_and_following(api)
+
+            # Sleep agent for x minutes
+            time.sleep(TIME_BETWEEN_ACTIONS)
+
+        # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
+
             MINUTES_TO_SLEEP = 5
             print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
 
             # Write rate limit to file
+
             rate_limit_log = open("rate_limit_log.txt", "a")
             time_of_rate_limit = get_current_datetime()
             out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
@@ -519,10 +677,9 @@ def main():
             rate_limit_log.write(out_string)
             rate_limit_log.close()
 
+            # Sleep for 5 minutes
+
             time.sleep(MINUTES_TO_SLEEP * 60)
-
-
-
 
 
 main()
