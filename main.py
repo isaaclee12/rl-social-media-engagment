@@ -336,14 +336,28 @@ def action1_trending(api):
                 id = tweet.id
                 user_id = tweet.user.id
 
-                # FAVORITE/LIKE
-                api.create_favorite(id)
+                # Like
+                try:
+                    print("Liking tweet:", tweet.text)
+                    api.create_favorite(tweet.id)
+                except:
+                    print("Could not like tweet")
 
-                # RETWEET
-                api.retweet(id)
+                # Prevent Rate Limit
+                time.sleep(SLEEP_TIME)
+
+                # Retweet
+                try:
+                    print("Retweeting:", tweet.text)
+                    api.retweet(tweet.id)
+                except:
+                    print("Could not retweet tweet")
+
+                # Prevent Rate Limit
+                time.sleep(SLEEP_TIME)
 
                 # FOLLOW USER
-                api.create_friendship(user_id)
+                api.create_friendship(tweet.user_id)
 
                 # Print the text of the tweet + URL
                 # print(">>", tweet.full_text)
@@ -428,7 +442,7 @@ def action2_following(api):
         try:
             print("Liking tweet:", tweet.text)
             api.create_favorite(tweet.id)
-        except tweepy.TweepyException:
+        except:
             print("Could not like tweet")
 
         # Prevent Rate Limit
@@ -438,7 +452,7 @@ def action2_following(api):
         try:
             print("Retweeting:", tweet.text)
             api.retweet(tweet.id)
-        except tweepy.TweepyException:
+        except:
             print("Could not retweet tweet")
 
     # Close file
@@ -591,6 +605,71 @@ def get_rewards(api):
     # end
 
 
+def calculate_rewards(api, action_type):
+
+    if action_type == 1:
+        reward_history = open("action1_reward_history.txt", "r")
+
+        # line format: "count_times_action_taken, reward_avg"
+        action1_rewards = reward_history.readline()
+        action1_count, action1_reward_avg = action1_rewards.split(",")
+
+        # Add last reward for action to avg
+        action1_reward_avg = ((action1_reward_avg * action1_count) + get_rewards(api)) / (action1_count + 1)
+        action1_count += 1
+
+        # Write
+        reward_history.close()
+        reward_history = open("action1_reward_history.txt", "w")
+
+        out_string = action1_count + "," + action1_reward_avg
+        reward_history.write(out_string)
+
+        return
+
+    elif action_type == 2:
+        reward_history = open("action2_reward_history.txt", "r")
+
+        # line format: "count_times_action_taken, reward_avg"
+        action2_rewards = reward_history.readline()
+        action2_count, action2_reward_avg = action2_rewards.split(",")
+
+        # Add last reward for action to avg
+        action2_reward_avg = ((action2_reward_avg * action2_count) + get_rewards(api)) / (action2_count + 1)
+        action2_count += 1
+
+        # Write
+        reward_history.close()
+        reward_history = open("action2_reward_history.txt", "w")
+
+        out_string = action2_count + "," + action2_reward_avg
+        reward_history.write(out_string)
+
+        return
+
+    elif action_type == 3:
+        reward_history = open("action3_reward_history.txt", "r")
+
+        # line format: "count_times_action_taken, reward_avg"
+        action3_rewards = reward_history.readline()
+        action3_count, action3_reward_avg = action3_rewards.split(",")
+
+        # Add last reward for action to avg
+        action3_reward_avg = ((action3_reward_avg * action3_count) + get_rewards(api)) / (action3_count + 1)
+        action3_count += 1
+
+        # Write
+        reward_history.close()
+        reward_history = open("action3_reward_history.txt", "w")
+
+        out_string = action3_count + "," + action3_reward_avg
+        reward_history.write(out_string)
+
+        return
+
+   # end
+
+
 def main():
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
@@ -634,63 +713,68 @@ def main():
     # Begin Actions:
     running = True
 
-    for x in range(9):
-        pass
-    try:
+    while running:
+        try:
 
-        get_rewards(api)
+            # Get rewards
+            get_rewards(api)
 
-        action_type = random.randint(1, 3)
+            action_type = random.randint(1, 3)
 
-        # Get tweets, mentions, and retweets TODO: rename this function
-        # TODO: Uncomment if using
-        # get_feed_data(api)
+            print("Action type:", action_type)
 
-        # Get trends and popular tweets for those trends
-        # TODO: Uncomment if using
-        # extract_tweets_from_trending(api)
-
-        if action_type == 1:
-            # Action Type 1: Action is based on tweets on trending topics
+            # Get tweets, mentions, and retweets TODO: rename this function
             # TODO: Uncomment if using
-            action1_trending(api)
+            # get_feed_data(api)
 
-        elif action_type == 2:
-            # Action Type 2: Action is based on someone the bot is following
+            # Get trends and popular tweets for those trends
             # TODO: Uncomment if using
-            action2_following(api)
+            # extract_tweets_from_trending(api)
 
-        elif action_type == 3:
-            # Action Type 3: Action is based on random search query
-            # TODO: Uncomment if using
-            action3_random_query(api)
+            if action_type == 1:
+                # Action Type 1: Action is based on tweets on trending topics
+                # TODO: Uncomment if using
+                action1_trending(api)
 
-        # TODO: Decide if this function is even necessary
-        # Extra Action: Purge all tweets and following.
-        # Uncomment if using
-        # purge_tweets_and_following(api)
+            elif action_type == 2:
+                # Action Type 2: Action is based on someone the bot is following
+                # TODO: Uncomment if using
+                action2_following(api)
 
-        # Sleep agent for x minutes
-        time.sleep(TIME_BETWEEN_ACTIONS)
+            elif action_type == 3:
+                # Action Type 3: Action is based on random search query
+                # TODO: Uncomment if using
+                action3_random_query(api)
 
-    # Sleeps the agent for 5 minutes when rate limited
-    except tweepy.RateLimitError:
+            # TODO: Decide if this function is even necessary
+            # Extra Action: Purge all tweets and following.
+            # Uncomment if using
+            # purge_tweets_and_following(api)
 
-        MINUTES_TO_SLEEP = 5
-        print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
+            # Sleep agent for x minutes
+            time.sleep(TIME_BETWEEN_ACTIONS)
 
-        # Write rate limit to file
+            # Calculate rewards
+            calculate_rewards(api, action_type)
 
-        rate_limit_log = open("rate_limit_log.txt", "a")
-        time_of_rate_limit = get_current_datetime()
-        out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
-        print(out_string)
-        rate_limit_log.write(out_string)
-        rate_limit_log.close()
+        # Sleeps the agent for 5 minutes when rate limited
+        except tweepy.RateLimitError:
 
-        # Sleep for 5 minutes
+            MINUTES_TO_SLEEP = 5
+            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
 
-        time.sleep(MINUTES_TO_SLEEP * 60)
+            # Write rate limit to file
+
+            rate_limit_log = open("rate_limit_log.txt", "a")
+            time_of_rate_limit = get_current_datetime()
+            out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
+            print(out_string)
+            rate_limit_log.write(out_string)
+            rate_limit_log.close()
+
+            # Sleep for 5 minutes
+
+            time.sleep(MINUTES_TO_SLEEP * 60)
 
 
 main()
