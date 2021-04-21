@@ -357,7 +357,7 @@ def action1_trending(api):
                 time.sleep(SLEEP_TIME)
 
                 # FOLLOW USER
-                api.create_friendship(tweet.user_id)
+                api.create_friendship(tweet.user.id)
 
                 # Print the text of the tweet + URL
                 # print(">>", tweet.full_text)
@@ -613,6 +613,7 @@ def calculate_rewards(api, action_type):
         # line format: "count_times_action_taken, reward_avg"
         action1_rewards = reward_history.readline()
         action1_count, action1_reward_avg = action1_rewards.split(",")
+        action1_count, action1_reward_avg = float(action1_count), float(action1_reward_avg)
 
         # Add last reward for action to avg
         action1_reward_avg = ((action1_reward_avg * action1_count) + get_rewards(api)) / (action1_count + 1)
@@ -622,7 +623,7 @@ def calculate_rewards(api, action_type):
         reward_history.close()
         reward_history = open("action1_reward_history.txt", "w")
 
-        out_string = action1_count + "," + action1_reward_avg
+        out_string = str(action1_count) + "," + str(action1_reward_avg)
         reward_history.write(out_string)
 
         return
@@ -633,6 +634,7 @@ def calculate_rewards(api, action_type):
         # line format: "count_times_action_taken, reward_avg"
         action2_rewards = reward_history.readline()
         action2_count, action2_reward_avg = action2_rewards.split(",")
+        action2_count, action2_reward_avg = float(action2_count), float(action2_reward_avg)
 
         # Add last reward for action to avg
         action2_reward_avg = ((action2_reward_avg * action2_count) + get_rewards(api)) / (action2_count + 1)
@@ -642,7 +644,7 @@ def calculate_rewards(api, action_type):
         reward_history.close()
         reward_history = open("action2_reward_history.txt", "w")
 
-        out_string = action2_count + "," + action2_reward_avg
+        out_string = str(action2_count) + "," + str(action2_reward_avg)
         reward_history.write(out_string)
 
         return
@@ -653,6 +655,7 @@ def calculate_rewards(api, action_type):
         # line format: "count_times_action_taken, reward_avg"
         action3_rewards = reward_history.readline()
         action3_count, action3_reward_avg = action3_rewards.split(",")
+        action3_count, action3_reward_avg = float(action3_count), float(action3_reward_avg)
 
         # Add last reward for action to avg
         action3_reward_avg = ((action3_reward_avg * action3_count) + get_rewards(api)) / (action3_count + 1)
@@ -662,7 +665,7 @@ def calculate_rewards(api, action_type):
         reward_history.close()
         reward_history = open("action3_reward_history.txt", "w")
 
-        out_string = action3_count + "," + action3_reward_avg
+        out_string = str(action3_count) + "," + str(action3_reward_avg)
         reward_history.write(out_string)
 
         return
@@ -671,6 +674,8 @@ def calculate_rewards(api, action_type):
 
 
 def main():
+
+    # TODO: ASAP. Apparently there is a follower limit. Account for that.
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
     # IMPORTANT: Keep secret user keys in separate file
@@ -706,7 +711,8 @@ def main():
     # Get current datetime tuple
     current_datetime = get_current_datetime
 
-    MINUTES_BETWEEN_ACTIONS = 1
+    # TODO: Account for time between actions
+    MINUTES_BETWEEN_ACTIONS = 10
     TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
     # TIME_BETWEEN_ACTIONS = 2.0
 
