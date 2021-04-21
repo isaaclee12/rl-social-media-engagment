@@ -3,7 +3,8 @@ import time
 import random
 from datetime import datetime, timedelta
 import pytz
-
+TWEET_COUNT = 10
+SLEEP_TIME = 0.75
 
 def get_current_datetime():
 
@@ -312,58 +313,52 @@ def action1_trending(api):
         # get list of trends from item
         trend_list = trend_list.get("trends")
 
-        # print name for first 5 trends
-        for i in range(5):
+        # Choose a random trending topic
+        index = random.randint(0, len(trend_list) - 1)
 
-            # Extract trend name
-            trend_name = trend_list[i].get("name")
-            # print("\n------------------------------------------------------------------------")
-            # print(trend_name)
-            # print("------------------------------------------------------------------------")
+        # Extract trend name
+        trend_name = trend_list[index].get("name")
+        # print("\n------------------------------------------------------------------------")
+        # print(trend_name)
+        # print("------------------------------------------------------------------------")
+
+        # Prevent Rate Limit
+        time.sleep(SLEEP_TIME)
+
+        # Get XX top popular tweets for this trend, with tweet mode extended to show full tweet
+
+        search_results = api.search(trend_name, result_type="popular", count=TWEET_COUNT, include_entities=False,
+                                    tweet_mode="extended")
+
+        # Print resulting tweets for this trend
+        for tweet in search_results:
+
+            # Like
+            try:
+                api.create_favorite(tweet.id)
+                print("Liking tweet:", tweet.text)
+            except:
+                print("Could not like tweet")
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
 
-            # Get XX top popular tweets for this trend, with tweet mode extended to show full tweet
-            TWEET_COUNT = 1
-            search_results = api.search(trend_name, result_type="popular", count=TWEET_COUNT, include_entities=False,
-                                        tweet_mode="extended")
+            # Retweet
+            try:
+                api.retweet(tweet.id)
+                print("Retweeting:", tweet.text)
+            except:
+                print("Could not retweet tweet")
 
-            # Print resulting tweets for this trend
-            for tweet in search_results:
+            # Prevent Rate Limit
+            time.sleep(SLEEP_TIME)
 
-                # Get tweet id, and user's id
-                id = tweet.id
-                user_id = tweet.user.id
-
-                # Like
-                try:
-                    print("Liking tweet:", tweet.text)
-                    api.create_favorite(tweet.id)
-                except:
-                    print("Could not like tweet")
-
-                # Prevent Rate Limit
-                time.sleep(SLEEP_TIME)
-
-                # Retweet
-                try:
-                    print("Retweeting:", tweet.text)
-                    api.retweet(tweet.id)
-                except:
-                    print("Could not retweet tweet")
-
-                # Prevent Rate Limit
-                time.sleep(SLEEP_TIME)
-
-                # FOLLOW USER
+            # Follow
+            try:
                 api.create_friendship(tweet.user.id)
-
-                # Print the text of the tweet + URL
-                # print(">>", tweet.full_text)
-
-                # Prevent Rate Limit
-                time.sleep(SLEEP_TIME)
+                print("Followed @", tweet.user.screen_name)
+            except:
+                print("Could not follow user")
 
 
 def action2_following(api):
@@ -401,12 +396,11 @@ def action2_following(api):
 
     print("SELECTED USER: ", selected_user.screen_name)
 
-
     # Prevent Rate Limit
     time.sleep(SLEEP_TIME)
 
     # Get list of users the selected user is following
-    selected_user_following = api.friends(selected_user.id, count=10)
+    selected_user_following = api.friends(selected_user.id, count=TWEET_COUNT)
 
     # Print list of users the selected user is following
     # Follow some people who that user is following
@@ -414,23 +408,26 @@ def action2_following(api):
 
         # Check if already following user
         if user.screen_name in following_array_from_file:
-            print("Already following @", user.screen_name, sep="")
+            print("Already followed @", user.screen_name, sep="")
 
         # If not following yet, follow
         else:
-            print("Following @", user.screen_name, sep="")
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
 
-            # Follow request
-            api.create_friendship(user.id)
+            # Follow
+            try:
+                api.create_friendship(user.id)
+                print("Followed @", user.screen_name)
+            except:
+                print("Could not follow user")
 
     # Prevent Rate Limit
     time.sleep(SLEEP_TIME)
 
     # Get that user's latest tweets
-    selected_user_timeline = api.user_timeline(selected_user.id, count=10)
+    selected_user_timeline = api.user_timeline(selected_user.id, count=TWEET_COUNT)
 
     # Like and retweet the that user's 10 latest tweets
     for tweet in selected_user_timeline:
@@ -440,8 +437,8 @@ def action2_following(api):
 
         # Like
         try:
-            print("Liking tweet:", tweet.text)
             api.create_favorite(tweet.id)
+            print("Liking tweet:", tweet.text)
         except:
             print("Could not like tweet")
 
@@ -450,8 +447,8 @@ def action2_following(api):
 
         # Retweet
         try:
-            print("Retweeting:", tweet.text)
             api.retweet(tweet.id)
+            print("Retweeting:", tweet.text)
         except:
             print("Could not retweet tweet")
 
@@ -484,7 +481,6 @@ def action3_random_query(api):
 
     print("QUERY:", query)
 
-
     # Open list of followers
     following_archive = open("following.txt", "r")
 
@@ -495,8 +491,6 @@ def action3_random_query(api):
         following_array_from_file.append(line)
         line = following_archive.readline()
 
-    #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
-    SLEEP_TIME = 0.75
     time.sleep(SLEEP_TIME)
 
     # Search top 10 tweets with query
@@ -506,25 +500,29 @@ def action3_random_query(api):
 
         # Check if already following user
         if tweet.user.screen_name in following_array_from_file:
-            print("Already following @", tweet.user.screen_name, sep="")
+            print("Already followed @", tweet.user.screen_name, sep="")
 
         # If not following yet, follow
         else:
-            print("Following @", tweet.user.screen_name, sep="")
+            print("Followed @", tweet.user.screen_name, sep="")
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
 
-            # Follow request
-            api.create_friendship(tweet.user.id)
+            # Follow
+            try:
+                api.create_friendship(tweet.user.id)
+                print("Followed @", tweet.user.screen_name)
+            except:
+                print("Could not follow user")
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
 
         # Like
         try:
-            print("Liking tweet:", tweet.text)
             api.create_favorite(tweet.id)
+            print("Liking tweet:", tweet.text)
         except:
             print("Could not like tweet")
 
@@ -533,8 +531,8 @@ def action3_random_query(api):
 
         # Retweet
         try:
-            print("Retweeting:", tweet.text)
             api.retweet(tweet.id)
+            print("Retweeting:", tweet.text)
         except:
             print("Could not retweet tweet")
 
@@ -767,7 +765,7 @@ def main():
         except tweepy.RateLimitError:
 
             MINUTES_TO_SLEEP = 5
-            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
+            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP, "minutes.")
 
             # Write rate limit to file
 
