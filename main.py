@@ -540,6 +540,10 @@ def purge_tweets_and_following(api):
 
 
 def get_rewards(api):
+    '''
+        Get rewards based off last action
+        reward = diff. in followers since last action
+    '''
 
     followers_file = open("followers.txt", "r")
     followers_array = []
@@ -569,7 +573,7 @@ def get_rewards(api):
         followers_file = open("followers.txt", "w")
 
         for follower in followers:
-            followers_file.write(follower.screen_name)
+            followers_file.write(follower.screen_name + "\n")
 
         return reward
 
@@ -625,61 +629,68 @@ def main():
 
     MINUTES_BETWEEN_ACTIONS = 1
     TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
+    # TIME_BETWEEN_ACTIONS = 2.0
 
     # Begin Actions:
     running = True
 
     for x in range(9):
-        try:
+        pass
+    try:
 
-            get_rewards(api)
+        get_rewards(api)
 
-            # Get tweets, mentions, and retweets TODO: rename this function
-            # TODO: Uncomment if using
-            # get_feed_data(api)
+        action_type = random.randint(1, 3)
 
-            # Get trends and popular tweets for those trends
-            # TODO: Uncomment if using
-            # extract_tweets_from_trending(api)
+        # Get tweets, mentions, and retweets TODO: rename this function
+        # TODO: Uncomment if using
+        # get_feed_data(api)
 
+        # Get trends and popular tweets for those trends
+        # TODO: Uncomment if using
+        # extract_tweets_from_trending(api)
+
+        if action_type == 1:
             # Action Type 1: Action is based on tweets on trending topics
             # TODO: Uncomment if using
-            # action1_trending(api)
+            action1_trending(api)
 
+        elif action_type == 2:
             # Action Type 2: Action is based on someone the bot is following
             # TODO: Uncomment if using
-            # action2_following(api)
+            action2_following(api)
 
+        elif action_type == 3:
             # Action Type 3: Action is based on random search query
             # TODO: Uncomment if using
-            # action3_random_query(api)
+            action3_random_query(api)
 
-            # TODO: Decide if this function is even necessary
-            # Extra Action: Purge all tweets and following.
-            # Uncomment if using
-            # purge_tweets_and_following(api)
+        # TODO: Decide if this function is even necessary
+        # Extra Action: Purge all tweets and following.
+        # Uncomment if using
+        # purge_tweets_and_following(api)
 
-            # Sleep agent for x minutes
-            time.sleep(TIME_BETWEEN_ACTIONS)
+        # Sleep agent for x minutes
+        time.sleep(TIME_BETWEEN_ACTIONS)
 
-        # Sleeps the agent for 5 minutes when rate limited
-        except tweepy.RateLimitError:
+    # Sleeps the agent for 5 minutes when rate limited
+    except tweepy.RateLimitError:
 
-            MINUTES_TO_SLEEP = 5
-            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
+        MINUTES_TO_SLEEP = 5
+        print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP ,"minutes.")
 
-            # Write rate limit to file
+        # Write rate limit to file
 
-            rate_limit_log = open("rate_limit_log.txt", "a")
-            time_of_rate_limit = get_current_datetime()
-            out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
-            print(out_string)
-            rate_limit_log.write(out_string)
-            rate_limit_log.close()
+        rate_limit_log = open("rate_limit_log.txt", "a")
+        time_of_rate_limit = get_current_datetime()
+        out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
+        print(out_string)
+        rate_limit_log.write(out_string)
+        rate_limit_log.close()
 
-            # Sleep for 5 minutes
+        # Sleep for 5 minutes
 
-            time.sleep(MINUTES_TO_SLEEP * 60)
+        time.sleep(MINUTES_TO_SLEEP * 60)
 
 
 main()
