@@ -546,8 +546,6 @@ def purge_tweets_and_following(api):
     # Get following
     following = api.friends(count=50)
 
-
-
     #end
 
 
@@ -595,12 +593,6 @@ def get_rewards(api):
         print("Reward =", reward)
 
         return 0
-
-
-
-    # for follower in followers:
-    #     follower.id
-    # end
 
 
 def calculate_rewards(api, action_type):
@@ -668,12 +660,8 @@ def calculate_rewards(api, action_type):
 
         return
 
-   # end
-
 
 def main():
-
-    # TODO: ASAP. Apparently there is a follower limit. Account for that.
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
     # IMPORTANT: Keep secret user keys in separate file
@@ -710,7 +698,7 @@ def main():
     current_datetime = get_current_datetime
 
     # TODO: Account for time between actions
-    MINUTES_BETWEEN_ACTIONS = 10
+    MINUTES_BETWEEN_ACTIONS = 12
     TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
     # TIME_BETWEEN_ACTIONS = 2.0
 
@@ -723,31 +711,78 @@ def main():
             # Get rewards
             get_rewards(api)
 
-            action_type = random.randint(1, 3)
+            # Epsilon
+            epsilon_threshold = 0.9
+
+            # Decimal btwn 0 and 1
+            epsilon = random.random()
+
+            # Print epsilon
+            print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
+
+            # if epsilon below threshold, do random
+            # TODO: PROBABILITY OF RANDOM SHOULD BE LOW
+            # TODO: ADD Q UPDATE TO MARK BEST POLICY(S)
+            # TODO: q' <- q + (1/n)[r - q]
+            # TODO: Q values for each state/action pair, so make a table, based on rewards.
+            # TODO: Every action should have a Q value associated with it **** THIS ONE THIS ONE THIS ONE
+            # Ben Caruso and Caleb Williams
+
+
+
+            if epsilon < epsilon_threshold:
+
+                print("Random (Exploration) Action")
+
+                action_type = random.randint(1, 3)
+
+            # if epsilon above threshold, do greedy
+            elif epsilon >= epsilon_threshold:
+
+                print("Greedy (Exploitation) Action")
+
+                action1_reward_history = open("action1_reward_history.txt", "r")
+                action2_reward_history = open("action2_reward_history.txt", "r")
+                action3_reward_history = open("action3_reward_history.txt", "r")
+
+                # Extract avg reward values from each action
+                action1_reward_avg = float(action1_reward_history.readline().split(",")[1])
+                action2_reward_avg = float(action2_reward_history.readline().split(",")[1])
+                action3_reward_avg = float(action3_reward_history.readline().split(",")[1])
+
+                best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
+                if best_action_reward == action1_reward_avg:
+                    print("Best action: 1, avg  reward:", best_action_reward)
+                    action_type = 1
+
+                elif best_action_reward == action2_reward_avg:
+                    print("Best action: 2, avg reward:", best_action_reward)
+                    action_type = 2
+
+                elif best_action_reward == action3_reward_avg:
+                    print("Best action: 3, avg reward:", best_action_reward)
+                    action_type = 3
 
             print("Action type:", action_type)
 
             # Get tweets, mentions, and retweets TODO: rename this function
-            # TODO: Uncomment if using
+            # Uncomment if using
             # get_feed_data(api)
 
             # Get trends and popular tweets for those trends
-            # TODO: Uncomment if using
+            # Uncomment if using
             # extract_tweets_from_trending(api)
 
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
-                # TODO: Uncomment if using
                 action1_trending(api)
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
-                # TODO: Uncomment if using
                 action2_following(api)
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
-                # TODO: Uncomment if using
                 action3_random_query(api)
 
             # TODO: Decide if this function is even necessary
@@ -755,11 +790,16 @@ def main():
             # Uncomment if using
             # purge_tweets_and_following(api)
 
-            # Sleep agent for x minutes
-            time.sleep(TIME_BETWEEN_ACTIONS)
+            # TODO: Add hourly logging machine.
+            # TODO: Increase time between actions
+            # TODO: Save action reward history and reset it
 
             # Calculate rewards
             calculate_rewards(api, action_type)
+
+            # Sleep agent for x minutes
+            print("Sleeping for", MINUTES_BETWEEN_ACTIONS, "minutes")
+            time.sleep(TIME_BETWEEN_ACTIONS)
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
