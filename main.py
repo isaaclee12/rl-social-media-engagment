@@ -3,6 +3,8 @@ import time
 import random
 from datetime import datetime, timedelta
 import pytz
+import os
+
 TWEET_COUNT = 10
 SLEEP_TIME = 0.75
 
@@ -21,7 +23,7 @@ def get_current_datetime():
     datetime_gmt = datetime + timedelta(hours=4)
 
     # Turn datetime object into string tuple & return it
-    datetime = datetime_gmt.strftime("%Y-%m-%d %H:%M:%S")
+    datetime = datetime_gmt.strftime("%Y-%m-%d %H-%M-%S")
 
     current_date, current_time = datetime.split()
     # print("\nCurrent Date and Time:", current_date, current_time)
@@ -595,10 +597,10 @@ def get_rewards(api):
         return 0
 
 
-def calculate_rewards(api, action_type):
+def calculate_rewards(api, action_type, action_filename):
 
     if action_type == 1:
-        reward_history = open("action1_reward_history.txt", "r")
+        reward_history = open(action_filename, "r")
 
         # line format: "count_times_action_taken, reward_avg"
         action1_rewards = reward_history.readline()
@@ -611,7 +613,7 @@ def calculate_rewards(api, action_type):
 
         # Write
         reward_history.close()
-        reward_history = open("action1_reward_history.txt", "w")
+        reward_history = open(action_filename, "w")
 
         out_string = str(action1_count) + "," + str(action1_reward_avg)
         reward_history.write(out_string)
@@ -619,7 +621,7 @@ def calculate_rewards(api, action_type):
         return
 
     elif action_type == 2:
-        reward_history = open("action2_reward_history.txt", "r")
+        reward_history = open(action_filename, "r")
 
         # line format: "count_times_action_taken, reward_avg"
         action2_rewards = reward_history.readline()
@@ -632,7 +634,7 @@ def calculate_rewards(api, action_type):
 
         # Write
         reward_history.close()
-        reward_history = open("action2_reward_history.txt", "w")
+        reward_history = open(action_filename, "w")
 
         out_string = str(action2_count) + "," + str(action2_reward_avg)
         reward_history.write(out_string)
@@ -640,7 +642,7 @@ def calculate_rewards(api, action_type):
         return
 
     elif action_type == 3:
-        reward_history = open("action3_reward_history.txt", "r")
+        reward_history = open(action_filename, "r")
 
         # line format: "count_times_action_taken, reward_avg"
         action3_rewards = reward_history.readline()
@@ -653,7 +655,7 @@ def calculate_rewards(api, action_type):
 
         # Write
         reward_history.close()
-        reward_history = open("action3_reward_history.txt", "w")
+        reward_history = open(action_filename, "w")
 
         out_string = str(action3_count) + "," + str(action3_reward_avg)
         reward_history.write(out_string)
@@ -702,14 +704,35 @@ def main():
     TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
     # TIME_BETWEEN_ACTIONS = 2.0
 
-    # Begin Actions:
+
+
+    # Establish Q Matrix
+    q_matrix = []
+
+    # Initialize files
+    path = os.path.dirname(__file__)
+    sub_dir = "reward_value_logs\\"
+    log_file_path = os.path.join(path, sub_dir)
+
+    '''
+    Create filename for file based on date/time of script init
+    w/ relative path to sub-directory "reward_value_logs"
+    '''
+    current_date, current_time = get_current_datetime()
+    action1_filename = log_file_path + "action1_reward_history_" + current_date + "_" + current_time
+    action2_filename = log_file_path + "action2_reward_history_" + current_date + "_" + current_time
+    action3_filename = log_file_path + "action3_reward_history_" + current_date + "_" + current_time
+
+    # Init current followers via get_rewards()
+    get_rewards(api)
+
+    # Init other vars, begin actions:
     running = True
+    action_type = 0
+    action_filename = ""
 
     while running:
         try:
-
-            # Get rewards
-            get_rewards(api)
 
             # Epsilon
             epsilon_threshold = 0.9
@@ -728,8 +751,6 @@ def main():
             # TODO: Every action should have a Q value associated with it **** THIS ONE THIS ONE THIS ONE
             # Ben Caruso and Caleb Williams
 
-
-
             if epsilon < epsilon_threshold:
 
                 print("Random (Exploration) Action")
@@ -741,14 +762,20 @@ def main():
 
                 print("Greedy (Exploitation) Action")
 
-                action1_reward_history = open("action1_reward_history.txt", "r")
-                action2_reward_history = open("action2_reward_history.txt", "r")
-                action3_reward_history = open("action3_reward_history.txt", "r")
+                # Read files
+                action1_reward_history = open(action1_filename, "r")
+                action2_reward_history = open(action2_filename, "r")
+                action3_reward_history = open(action3_filename, "r")
 
                 # Extract avg reward values from each action
                 action1_reward_avg = float(action1_reward_history.readline().split(",")[1])
                 action2_reward_avg = float(action2_reward_history.readline().split(",")[1])
                 action3_reward_avg = float(action3_reward_history.readline().split(",")[1])
+
+                # Close files
+                action1_reward_history.close()
+                action2_reward_history.close()
+                action3_reward_history.close()
 
                 best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
                 if best_action_reward == action1_reward_avg:
@@ -773,17 +800,24 @@ def main():
             # Uncomment if using
             # extract_tweets_from_trending(api)
 
+            '''
+            Perform action 1 - 3
+            Set action_filename respective to that action
+            '''
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
                 action1_trending(api)
+                action_filename = action1_filename
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
                 action2_following(api)
+                action_filename = action2_filename
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
                 action3_random_query(api)
+                action_filename = action3_filename
 
             # TODO: Decide if this function is even necessary
             # Extra Action: Purge all tweets and following.
@@ -794,12 +828,18 @@ def main():
             # TODO: Increase time between actions
             # TODO: Save action reward history and reset it
 
-            # Calculate rewards
-            calculate_rewards(api, action_type)
-
             # Sleep agent for x minutes
             print("Sleeping for", MINUTES_BETWEEN_ACTIONS, "minutes")
             time.sleep(TIME_BETWEEN_ACTIONS)
+
+            # Get rewards since last action
+            # No longer needed, used in calculate_rewards
+            # reward = get_rewards(api)
+
+            # Calculate rewards
+            calculate_rewards(api, action_type, action_filename)
+
+
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
