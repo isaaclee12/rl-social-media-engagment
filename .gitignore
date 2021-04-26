@@ -133,3 +133,7 @@ dmypy.json
 .idea
 
 credentials.txt
+placeholder_data_generator.py
+rate_limit_log.txt
+linear-bandits.py
+CS253 Project Proposal.pdf

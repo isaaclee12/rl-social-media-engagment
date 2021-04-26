@@ -597,26 +597,36 @@ def get_rewards(api):
         return 0
 
 
-def calculate_rewards(api, action_type, action_filename):
+def calculate_reward_avg(api, action_type, action_filename, reward):
 
     if action_type == 1:
-        reward_history = open(action_filename, "r")
 
-        # line format: "count_times_action_taken, reward_avg"
-        action1_rewards = reward_history.readline()
-        action1_count, action1_reward_avg = action1_rewards.split(",")
-        action1_count, action1_reward_avg = float(action1_count), float(action1_reward_avg)
+        # If reward file already exists, read in data
+        path = "reward_value_logs/" + action_filename
+        if os.path.isfile(path):
+            reward_history = open(action_filename, "r")
+            # line format: "count_times_action_taken, reward_avg"
+            action1_rewards = reward_history.readline()
+            action1_count, action1_reward_avg = action1_rewards.split(",")
+            action1_count, action1_reward_avg = float(action1_count), float(action1_reward_avg)
 
-        # Add last reward for action to avg
-        action1_reward_avg = ((action1_reward_avg * action1_count) + get_rewards(api)) / (action1_count + 1)
-        action1_count += 1
+            # Add last reward for action to avg
+            action1_reward_avg = ((action1_reward_avg * action1_count) + reward) / (action1_count + 1)
+            action1_count += 1
 
-        # Write
-        reward_history.close()
-        reward_history = open(action_filename, "w")
+            # Write
+            reward_history.close()
+            reward_history = open(action_filename, "w")
 
-        out_string = str(action1_count) + "," + str(action1_reward_avg)
-        reward_history.write(out_string)
+            out_string = str(action1_count) + "," + str(action1_reward_avg)
+            reward_history.write(out_string)
+
+        # Else init new file
+        else:
+            reward_history = open(action_filename, "w")
+
+
+
 
         return
 
@@ -629,7 +639,7 @@ def calculate_rewards(api, action_type, action_filename):
         action2_count, action2_reward_avg = float(action2_count), float(action2_reward_avg)
 
         # Add last reward for action to avg
-        action2_reward_avg = ((action2_reward_avg * action2_count) + get_rewards(api)) / (action2_count + 1)
+        action2_reward_avg = ((action2_reward_avg * action2_count) + reward) / (action2_count + 1)
         action2_count += 1
 
         # Write
@@ -650,7 +660,7 @@ def calculate_rewards(api, action_type, action_filename):
         action3_count, action3_reward_avg = float(action3_count), float(action3_reward_avg)
 
         # Add last reward for action to avg
-        action3_reward_avg = ((action3_reward_avg * action3_count) + get_rewards(api)) / (action3_count + 1)
+        action3_reward_avg = ((action3_reward_avg * action3_count) + reward) / (action3_count + 1)
         action3_count += 1
 
         # Write
@@ -661,6 +671,7 @@ def calculate_rewards(api, action_type, action_filename):
         reward_history.write(out_string)
 
         return
+
 
 
 def main():
@@ -730,6 +741,7 @@ def main():
     running = True
     action_type = 0
     action_filename = ""
+    q = 0
 
     while running:
         try:
@@ -744,7 +756,6 @@ def main():
             print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
 
             # if epsilon below threshold, do random
-            # TODO: PROBABILITY OF RANDOM SHOULD BE LOW
             # TODO: ADD Q UPDATE TO MARK BEST POLICY(S)
             # TODO: q' <- q + (1/n)[r - q]
             # TODO: Q values for each state/action pair, so make a table, based on rewards.
@@ -829,17 +840,34 @@ def main():
             # TODO: Save action reward history and reset it
 
             # Sleep agent for x minutes
-            print("Sleeping for", MINUTES_BETWEEN_ACTIONS, "minutes")
-            time.sleep(TIME_BETWEEN_ACTIONS)
+            # print("Sleeping for", MINUTES_BETWEEN_ACTIONS, "minutes")
+            # time.sleep(TIME_BETWEEN_ACTIONS)
 
             # Get rewards since last action
-            # No longer needed, used in calculate_rewards
+            # No longer needed, used in calculate_reward_avg
             # reward = get_rewards(api)
 
-            # Calculate rewards
-            calculate_rewards(api, action_type, action_filename)
+            # Get reward
+            reward = get_rewards(api)
 
+            # Calculate reward avg
+            calculate_reward_avg(api, action_type, action_filename, reward)
 
+            # Calculate n
+            if len(q_matrix) > 0:
+                n = len(q_matrix)
+            else:
+                n = 1
+
+            # Calculate Q
+            # q' = q + (1/n)[r - q]
+            q = q + (1/n) * (reward - q)
+            a = "a" + action_type
+
+            print("Action:", a, "Q:", q)
+
+            q_matrix.append(a)
+            q_matrix.append(q)
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
@@ -857,8 +885,16 @@ def main():
             rate_limit_log.close()
 
             # Sleep for 5 minutes
-
             time.sleep(MINUTES_TO_SLEEP * 60)
+
+        # Sleep agent for all other errors
+        # except:
+        #
+        #     MINUTES_TO_SLEEP = 5
+        #     print("An unexpected error occurred. Sleeping for,", MINUTES_TO_SLEEP, "minutes.")
+        #
+        #     # Sleep for 5 minutes
+        #     time.sleep(MINUTES_TO_SLEEP * 60)
 
 
 main()
