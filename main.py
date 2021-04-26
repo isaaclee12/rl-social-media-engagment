@@ -597,81 +597,36 @@ def get_rewards(api):
         return 0
 
 
-def calculate_reward_avg(api, action_type, action_filename, reward):
+def calculate_reward_avg(action_filename, reward):
 
-    if action_type == 1:
-
-        # If reward file already exists, read in data
-        path = "reward_value_logs/" + action_filename
-        if os.path.isfile(path):
-            reward_history = open(action_filename, "r")
-            # line format: "count_times_action_taken, reward_avg"
-            action1_rewards = reward_history.readline()
-            action1_count, action1_reward_avg = action1_rewards.split(",")
-            action1_count, action1_reward_avg = float(action1_count), float(action1_reward_avg)
-
-            # Add last reward for action to avg
-            action1_reward_avg = ((action1_reward_avg * action1_count) + reward) / (action1_count + 1)
-            action1_count += 1
-
-            # Write
-            reward_history.close()
-            reward_history = open(action_filename, "w")
-
-            out_string = str(action1_count) + "," + str(action1_reward_avg)
-            reward_history.write(out_string)
-
-        # Else init new file
-        else:
-            reward_history = open(action_filename, "w")
-
-
-
-
-        return
-
-    elif action_type == 2:
+    # If reward file already exists, read in data
+    path = "reward_value_logs/" + action_filename
+    if os.path.isfile(path):
         reward_history = open(action_filename, "r")
-
         # line format: "count_times_action_taken, reward_avg"
-        action2_rewards = reward_history.readline()
-        action2_count, action2_reward_avg = action2_rewards.split(",")
-        action2_count, action2_reward_avg = float(action2_count), float(action2_reward_avg)
+        action_rewards = reward_history.readline()
+        action_count, action_reward_avg = action_rewards.split(",")
+        action_count, action_reward_avg = float(action_count), float(action_reward_avg)
 
         # Add last reward for action to avg
-        action2_reward_avg = ((action2_reward_avg * action2_count) + reward) / (action2_count + 1)
-        action2_count += 1
+        action_reward_avg = ((action_reward_avg * action_count) + reward) / (action_count + 1)
+        action_count += 1
 
         # Write
         reward_history.close()
         reward_history = open(action_filename, "w")
 
-        out_string = str(action2_count) + "," + str(action2_reward_avg)
+        out_string = str(action_count) + "," + str(action_reward_avg)
         reward_history.write(out_string)
-
-        return
-
-    elif action_type == 3:
-        reward_history = open(action_filename, "r")
-
-        # line format: "count_times_action_taken, reward_avg"
-        action3_rewards = reward_history.readline()
-        action3_count, action3_reward_avg = action3_rewards.split(",")
-        action3_count, action3_reward_avg = float(action3_count), float(action3_reward_avg)
-
-        # Add last reward for action to avg
-        action3_reward_avg = ((action3_reward_avg * action3_count) + reward) / (action3_count + 1)
-        action3_count += 1
-
-        # Write
         reward_history.close()
+
+    # Else init new file
+    else:
         reward_history = open(action_filename, "w")
+        reward_history.write("0, 1.0")
+        reward_history.close()
 
-        out_string = str(action3_count) + "," + str(action3_reward_avg)
-        reward_history.write(out_string)
-
-        return
-
+    return
 
 
 def main():
@@ -774,6 +729,10 @@ def main():
                 print("Greedy (Exploitation) Action")
 
                 # Read files
+
+                # If reward file already exists, read in data
+                path = "reward_value_logs/" + action1_filename
+                if os.path.isfile(path):
                 action1_reward_history = open(action1_filename, "r")
                 action2_reward_history = open(action2_filename, "r")
                 action3_reward_history = open(action3_filename, "r")
@@ -817,17 +776,17 @@ def main():
             '''
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
-                action1_trending(api)
+                # action1_trending(api)
                 action_filename = action1_filename
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
-                action2_following(api)
+                # action2_following(api)
                 action_filename = action2_filename
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
-                action3_random_query(api)
+                # action3_random_query(api)
                 action_filename = action3_filename
 
             # TODO: Decide if this function is even necessary
@@ -851,7 +810,7 @@ def main():
             reward = get_rewards(api)
 
             # Calculate reward avg
-            calculate_reward_avg(api, action_type, action_filename, reward)
+            calculate_reward_avg(action_filename, reward)
 
             # Calculate n
             if len(q_matrix) > 0:
@@ -862,7 +821,7 @@ def main():
             # Calculate Q
             # q' = q + (1/n)[r - q]
             q = q + (1/n) * (reward - q)
-            a = "a" + action_type
+            a = "a" + str(action_type)
 
             print("Action:", a, "Q:", q)
 
