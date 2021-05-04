@@ -69,12 +69,14 @@ def action1_trending(api):
         # Print resulting tweets for this trend
         for tweet in search_results:
 
+            print(tweet)
+
             # Like
             try:
                 api.create_favorite(tweet.id)
-                print("Liking tweet:", tweet.text)
+                print("Liking tweet:", tweet.full_text)
             except tweepy.TweepError as message:
-                print("Could not like tweet:", tweet.text, message)
+                print("Could not like tweet:", tweet.full_text, message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -82,9 +84,9 @@ def action1_trending(api):
             # Retweet
             try:
                 api.retweet(tweet.id)
-                print("Retweeting:", tweet.text)
+                print("Retweeting:", tweet.full_text)
             except tweepy.TweepError as message:
-                print("Could not retweet tweet:", tweet.text, message)
+                print("Could not retweet tweet:", tweet.full_text, message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -558,5 +560,15 @@ def main():
 
             # Sleep for 5 minutes
             time.sleep(minutes_to_sleep * 60)
+
+        # Catch all for all other errors
+        except:
+
+            minutes_to_sleep = 5
+            print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
+
+            # Sleep for 5 minutes
+            time.sleep(minutes_to_sleep * 60)
+
 
 main()
