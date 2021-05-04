@@ -8,6 +8,7 @@ import os
 TWEET_COUNT = 10
 SLEEP_TIME = 0.75
 
+
 def get_current_datetime():
 
     # For some reason this only runs if I import this here too
@@ -29,270 +30,6 @@ def get_current_datetime():
     # print("\nCurrent Date and Time:", current_date, current_time)
 
     return current_date, current_time
-
-
-def check_for_new_tweets(tweets, TWEET_AGE_MAX):
-
-    # Constants for date/time index in datetime tuple
-    DATE = 0
-    TIME = 1
-
-    for i in range(0, len(tweets)):
-
-        # Get tweet
-        tweet = tweets[i]
-
-        # get datetime string of when tweet was sent
-        tweet_datetime = tweet.created_at
-
-        # Split datetime string into date and time.
-        tweet_datetime_tuple = str(tweet_datetime).split()
-        tweet_date = tweet_datetime_tuple[0]
-        tweet_time = tweet_datetime_tuple[1]
-
-        #Print tweet contents
-        # print("\n")
-        print(tweet.text)
-
-        #Get current datetime. Current datetime will print to console here.
-        current_datetime = get_current_datetime()
-
-        # print("Tweet datetime: ", tweet_datetime_tuple)
-        # print("DATES: ", current_datetime[DATE], tweet_date)
-
-        # Check if the dates match.
-        if current_datetime[DATE] == tweet_date:
-
-            # If the dates match, compare times.
-            # Split current time into array by H/M/S
-            current_time = str(current_datetime[TIME]).split(":")
-
-            # Split tweet time into array by H/M/S.
-            tweet_time = str(tweet_time).split(":")
-
-            # Extract hour/minute/seconds form each
-            current_hour = int(current_time[0])
-            current_minute = int(current_time[1])
-            current_seconds = int(current_time[2])
-
-            tweet_hour = int(tweet_time[0])
-            tweet_minute = int(tweet_time[1])
-            tweet_seconds = int(tweet_time[2])
-
-            # Convert all to minutes and sum up
-            current_timesum = (current_hour * 60) + current_minute + (current_seconds/60)
-            tweet_timesum = (tweet_hour * 60) + tweet_minute + (tweet_seconds/60)
-
-            current_timesum = float(current_timesum)
-            tweet_timesum = float(tweet_timesum)
-
-            time_diff = current_timesum - tweet_timesum
-
-            # Convert time diff in minutes to seconds (this circumvents use of large numbers)
-            time_diff = time_diff * 60
-
-            # print("TIMEDIFF: ", time_diff)
-
-            # Check if time difference between when the tweet was
-            # and right now is less than tweet age max.
-            if (time_diff  <= TWEET_AGE_MAX):
-
-                # If so, then FOR NOW (TODO:), print them out. Later,
-                # LATER: Interact with the tweets.
-
-                print("(Time check passed)")
-
-                # Print tweet, datetime, and then newline.
-                # print(tweets[i].text,
-                # " //", tweet_datetime_tuple[0], " ", tweet_datetime_tuple[1],
-                # "\n", sep="")
-
-            else:
-                print("(Dates Match, but time check failed.()")
-        else:
-            print("(Dates do not match.)")
-    return
-
-
-def get_feed_data(api):
-    '''
-    Gets tweets, mentions, and retweets for bot.
-    '''
-    # Set up eternal loop
-    running = True
-
-    # Set time delay between each iteration.
-    SLEEP_TIME = 0.75# Make how old a tweet can be to still be interacted with this much.
-    TWEET_AGE_MAX = SLEEP_TIME
-
-    while (running):
-        # IMPORTANT: Delay X seconds between each step to prevent getting rate limited (DELAY is at end of loop btw).
-
-        # For some reason datetime only runs if I import this here too
-        from datetime import datetime, timedelta
-
-        # Print timestamp for each data pull
-        now = str(datetime.now())
-        print("\n\nLoop Timestamp:", now)
-
-        # NOTE: ONLY THE FIRST TWO TWEETS, FOR NOW.
-        # TODO: CHANGE TO 20 OR SOMETHING
-
-        ################# TWEETS #################
-        # This gets all of the last 2 tweets from yourself
-        print("\nTWEETS:")
-        tweets = api.user_timeline(count=2, screen_name="@egg69017129", include_rts=False)
-
-        # Check every 5 seconds for new tweets sent in the last 5 seconds.
-        check_for_new_tweets(tweets, TWEET_AGE_MAX)
-
-        ################ MENTIONS #################
-        # This gets all of the last 20 tweets sent to you directly to you.
-        print("\nMENTIONS:")
-        mentions = api.mentions_timeline()
-
-        # Check every 5 seconds for new mentions sent in the last 5 seconds.
-        check_for_new_tweets(mentions, TWEET_AGE_MAX)
-
-        ################# RETWEETS #################
-        # This gets the last 20 tweets that have been retweeted by another user.
-        print("\nRETWEETS:")
-        retweets = api.retweets_of_me()
-
-        # Check every 5 seconds for new retweets sent in the last 5 seconds.
-        check_for_new_tweets(retweets, TWEET_AGE_MAX)
-
-        #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
-        time.sleep(SLEEP_TIME)
-
-        # PSEUDO:
-
-        # For all tweets sent with a specific hashtag
-        # in the last SLEEP_TIME seconds:
-        # Reply to them.
-
-        # If a person replies to a tweet from DOGBOT that they have liked and/or retweeted,
-        # Like that person's reply-tweet back.
-
-        # For all tweets sent with a specific hashtag
-        # in the last SLEEP_TIME seconds:
-        # Retweet those tweets.
-
-        # If a person has followed you,
-        # and you have yet to follow them back,
-        # Follow them back
-
-        # For all new DM's sent in the last SLEEP_TIME seconds,
-        # Reply with a message.
-        # .list_direct_messages <- get DM's sent/recieved in last 30 days
-        # .send_direct_message <- send a DM
-
-    # PRACTICE CODE:
-
-    # ################ TIMELINE #################
-    # This gets all of the last 20 tweets on your timeline
-    # print("\n", "TIMELINE:", "\n")
-    # timeline = api.home_timeline()
-    # for i in range(0, len(timeline)):
-    #     time.sleep(SLEEP_TIME)
-    #     print(timeline[i].text, "\n")
-    #
-    # ################ MENTIONS #################
-    # This gets all of the last 20 tweets sent to you directly to you.
-    # mentions = api.mentions_timeline()
-    # print("\n", "MENTIONS:", "\n")
-    # for i in range(0, len(mentions)):
-    #     time.sleep(SLEEP_TIME)
-    #     print(mentions[i].text, " //", tweets[i].created_at,"\n", sep="") # created_at
-    #
-    # ################# RETWEETS #################
-    # # This gets the last 20 tweets that have been retweeted by another user.
-    # retweets = api.retweets_of_me()
-    # print("\n", "RETWEETS:", "\n")
-    # for i in range(0, len(retweets)):
-    #     time.sleep(SLEEP_TIME)
-    #     print(retweets[i].text, " //", tweets[i].created_at,"\n", sep="") # created_at
-
-    # Experimenting with dict key. The best key is
-    # created_at, which gives the date and time of tweet creation.
-    # mention = mentions[2].text #__dict__..keys()
-    # print(mention)
-    # Keys:
-    """
-    '_api', '_json', 'created_at', 'id', 'id_str', 'text', 'truncated',
-    'entities', 'source', 'source_url',
-    'in_reply_to_status_id', 'in_reply_to_status_id_str', 'in_reply_to_user_id',
-    'in_reply_to_user_id_str', 'in_reply_to_screen_name',
-    'author', 'user', 'geo', 'coordinates', 'place', 'contributors',
-    'is_quote_status', 'retweet_count', 'favorite_count',
-    'favorited', 'retweeted', 'lang']
-    """
-
-
-def extract_tweets_from_trending(api):
-    '''
-    Search trending tweets in the US and write to file
-    '''
-
-    # Get trending topic in US, woeid of US: 23424977
-    trends = api.trends_place(23424977)
-
-    #### VERY IMPORTANT TIME DELAY VAR - DO NOT TOUCH!!! ####
-    SLEEP_TIME = 0.75
-    time.sleep(SLEEP_TIME)
-
-    # Extract trends list from dict
-    for trend_list in trends:
-
-        # get list of trends from item
-        trend_list = trend_list.get("trends")
-
-        # print name for first 5 trends
-        for i in range(5):
-
-            # Extract trend name
-            trend_name = trend_list[i].get("name")
-            print("\n------------------------------------------------------------------------")
-            print(trend_name)
-            print("------------------------------------------------------------------------")
-
-            # Prevent Rate Limit
-            time.sleep(SLEEP_TIME)
-
-            # Get 10 top popular tweets for this trend
-            search_results = api.search(trend_name, result_type="popular", count=10, include_entities=False, tweet_mode="extended") # Hopefully this stops cutting them
-
-            # Print resulting tweets for this trend
-            for tweet in search_results:
-                # print(">>", tweet.text)  # .text gets just the text of the tweet + URL
-
-                # print(search_results)
-
-                try:
-                    # Write tweet to file. TODO: Remove the URL during extraction
-
-                    # Remove unicode
-                    tweet = tweet.full_text.encode('ascii', 'ignore').decode()
-
-                    # Remove symbols (except @,#,&,-,_,+,=) and make lowercase
-                    tweet = tweet.replace("\n", "").replace(",", "").replace(".", "").replace("?", "")\
-                        .replace("<", "").replace(">", "").replace("/", "").replace("!", "").replace("%", "")\
-                        .replace("^", "").replace("*", "").replace("(", "").replace(")", "").replace("{", "")\
-                        .replace("}", "").replace("[", "").replace("]", "").replace("|", "").replace(":", "")\
-                        .replace(";", "").replace("\"", "").replace("\\", "").lower()
-
-                    # Split at https to remove url
-                    tweet = tweet.split("https")
-                    tweet = tweet[0]
-
-                    # Print tweets for debug
-                    print(">>", tweet)
-
-                except UnicodeEncodeError:
-                    print("ERROR: Unable to write unknown unicode symbol")
-
-                # Prevent Rate Limit
-                time.sleep(SLEEP_TIME)
 
 
 def action1_trending(api):
@@ -721,17 +458,6 @@ def main():
     action2_filename = log_file_path + current_date + "_" + current_time + "_" + "action2_reward_history.txt"
     action3_filename = log_file_path + current_date + "_" + current_time + "_" + "action3_reward_history.txt"
 
-    # Init current followers via get_rewards()
-    # TODO: Clean this up
-    # reward = -10000
-    # while reward == -10000:
-    #     try:
-    #         reward = get_rewards(api)
-    #     except tweepy.RateLimitError:
-    #         print("Rate limited. Sleeping for 5 minutes.")
-    #         time.sleep(5 * 60)
-
-
     # Init other vars, begin actions:
     running = True
     action_type = 0
@@ -754,12 +480,6 @@ def main():
             print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
 
             # if epsilon below threshold, do random
-            # TODO: ADD Q UPDATE TO MARK BEST POLICY(S)
-            # TODO: q' <- q + (1/n)[r - q]
-            # TODO: Q values for each state/action pair, so make a table, based on rewards.
-            # TODO: Every action should have a Q value associated with it **** THIS ONE THIS ONE THIS ONE
-            # Ben Caruso and Caleb Williams
-
             if epsilon > epsilon_threshold:
 
                 print("Random (Exploration) Action")
@@ -803,14 +523,6 @@ def main():
 
             print("Action type:", action_type)
 
-            # Get tweets, mentions, and retweets TODO: rename this function
-            # Uncomment if using
-            # get_feed_data(api)
-
-            # Get trends and popular tweets for those trends
-            # Uncomment if using
-            # extract_tweets_from_trending(api)
-
             '''
             Perform action 1 - 3
             Set action_filename respective to that action
@@ -830,27 +542,6 @@ def main():
                 # action3_random_query(api)
                 action_filename = action3_filename
 
-            # TODO: Decide if this function is even necessary
-            # Extra Action: Purge all tweets and following.
-            # Uncomment if using
-            # purge_tweets_and_following(api)
-
-            # TODO: Add hourly logging machine.
-            # TODO: Increase time between actions
-            # TODO: Save action reward history and reset it
-
-            # Sleep agent for x minutes
-            # print("Sleeping for", MINUTES_BETWEEN_ACTIONS, "minutes")
-            # time.sleep(TIME_BETWEEN_ACTIONS)
-
-            # Get rewards since last action
-            # No longer needed, used in calculate_reward_avg
-            # reward = get_rewards(api)
-
-            # Get reward
-            # TODO: Uncomment once un-rate-limited
-            # reward = get_rewards(api)
-
             # Calculate reward avg
             calculate_reward_avg(action_filename, reward)
 
@@ -859,19 +550,6 @@ def main():
                 n = len(q_matrix)
             else:
                 n = 1
-
-            # Calculate Q
-            # q' = q + (1/n)[r - q]
-            q = q + (1/n) * (reward - q)
-            a = "a" + str(action_type)
-
-            print("Action:", a, "Q:", q)
-
-            q_matrix.append(a)
-            q_matrix.append(q)
-
-            # Debug
-            print(q_matrix)
 
             # Increment trial count
             trial += 1
@@ -882,8 +560,8 @@ def main():
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
 
-            MINUTES_TO_SLEEP = 5
-            print("You are being rate limited. Sleeping for,", MINUTES_TO_SLEEP, "minutes.")
+            minutes_to_sleep = 5
+            print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
 
             # Write rate limit to file
 
@@ -895,16 +573,6 @@ def main():
             rate_limit_log.close()
 
             # Sleep for 5 minutes
-            time.sleep(MINUTES_TO_SLEEP * 60)
-
-        # Sleep agent for all other errors
-        # except:
-        #
-        #     MINUTES_TO_SLEEP = 5
-        #     print("An unexpected error occurred. Sleeping for,", MINUTES_TO_SLEEP, "minutes.")
-        #
-        #     # Sleep for 5 minutes
-        #     time.sleep(MINUTES_TO_SLEEP * 60)
-
+            time.sleep(minutes_to_sleep * 60)
 
 main()
