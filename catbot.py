@@ -1,9 +1,8 @@
 import tweepy
 import time
 import random
-from datetime import datetime, timedelta
-import pytz
 import os
+import epsilon_source
 
 TWEET_COUNT = 10
 SLEEP_TIME = 0.75
@@ -406,7 +405,7 @@ def main():
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
     # IMPORTANT: Keep secret user keys in separate file
-    credentials = open("credentials.txt", "r")
+    credentials = open("credentials2.txt", "r")
     creds_array = []
 
     line = credentials.readline()
@@ -443,9 +442,9 @@ def main():
     w/ relative path to sub-directory "reward_value_logs"
     '''
 
-    action1_filename = log_file_path + "action1_reward_history.csv"
-    action2_filename = log_file_path + "action2_reward_history.csv"
-    action3_filename = log_file_path + "action3_reward_history.csv"
+    action1_filename = log_file_path + "catbot_action1_reward_history.csv"
+    action2_filename = log_file_path + "catbot_action2_reward_history.csv"
+    action3_filename = log_file_path + "catbot_action3_reward_history.csv"
 
     # Init other vars, begin actions:
     running = True
@@ -461,7 +460,7 @@ def main():
         try:
 
             # Epsilon
-            epsilon_threshold = 0.9
+            epsilon_threshold = epsilon_source.get_threshold()
 
             # Decimal btwn 0 and 1
             epsilon = random.random()
@@ -565,7 +564,7 @@ def main():
         except:
 
             minutes_to_sleep = 20
-            print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
+            print("Unknown error. Sleeping for", minutes_to_sleep, "minutes.")
 
             # Write error to log file
             rate_limit_log = open("rate_limit_log.txt", "a")

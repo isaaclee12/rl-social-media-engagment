@@ -133,6 +133,7 @@ dmypy.json
 .idea
 
 credentials.txt
+credentials2.txt
 placeholder_data_generator.py
 rate_limit_log.txt
 linear-bandits.py
