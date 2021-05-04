@@ -24,7 +24,7 @@ def get_current_datetime():
     datetime_gmt = datetime + timedelta(hours=4)
 
     # Turn datetime object into string tuple & return it
-    datetime = datetime_gmt.strftime("%Y-%m-%d %H-%M-%S")
+    datetime = datetime_gmt.strftime("%Y-%m-%d %H:%M:%S")
 
     current_date, current_time = datetime.split()
     # print("\nCurrent Date and Time:", current_date, current_time)
@@ -57,9 +57,6 @@ def action1_trending(api):
 
         # Extract trend name
         trend_name = trend_list[index].get("name")
-        # print("\n------------------------------------------------------------------------")
-        # print(trend_name)
-        # print("------------------------------------------------------------------------")
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -334,35 +331,43 @@ def get_rewards(api):
         return 0
 
 
-def calculate_reward_avg(action_filename, reward):
+def calculate_reward_avg(filename, reward):
+
+    print("---------------------------\nWriting to file:", filename)
 
     # If reward file already exists, read in data
-    path = "reward_value_logs/" + action_filename
-    if os.path.isfile(path):
-        reward_history = open(action_filename, "r")
-        # line format: "count_times_action_taken, reward_avg"
-        action_rewards = reward_history.readline()
-        action_count, action_reward_avg = action_rewards.split(",")
+    if os.path.isfile(filename):
+
+        # Read the last line in the file
+        with open(filename, 'r') as reward_history:
+            action_rewards = reward_history.readlines()[-1]
+
+        # Extract all values but just use the action_count/action_avg
+        action_count, action_reward_avg, old_date, old_time, null = action_rewards.split(",")
         action_count, action_reward_avg = float(action_count), float(action_reward_avg)
+
+        print("Previous count and avg:", action_count, action_reward_avg)
 
         # Add last reward for action to avg
         action_reward_avg = ((action_reward_avg * action_count) + reward) / (action_count + 1)
         action_count += 1
 
+        print("New count and avg:", action_count, action_reward_avg)
+
         # Append File
         reward_history.close()
-        reward_history = open(action_filename, "a")
+        reward_history = open(filename, "a")
 
-        out_string = str(action_count) + "," + str(action_reward_avg)
-        print("Writing to file:", out_string)
+        # Get time and date
+        current_date, current_time = get_current_datetime()
+        out_string = str(action_count) + "," + str(action_reward_avg) + "," \
+                     + current_date + "," + current_time + ",\n"
+        print("Writing to file:", out_string, end="")
         reward_history.write(out_string)
         reward_history.close()
 
-    # Else init new file
-    else:
-        reward_history = open(action_filename, "w")
-        reward_history.write("0, 1.0")
-        reward_history.close()
+    # End border
+    print("---------------------------\n")
 
     return
 
@@ -373,29 +378,27 @@ def read_or_init_reward_file(filename):
     init file if it does not yet exist
     '''
 
+    print("---------------------------\nReading file:", filename)
+
     # If file exists, open it
-    path = "reward_value_logs/" + filename
-    if os.path.isfile(path):
+    if os.path.isfile(filename):
 
         # Return the last line in the file
-        with open(filename, 'rb') as file:
+        with open(filename, 'r') as file:
+            last_line = file.readlines()[-1]
 
-            file.seek(-2, os.SEEK_END)
-            while file.read(1) != b'\n':
-                file.seek(-2, os.SEEK_CUR)
-            last_line = file.readline().decode()
-
-            # for line in file:
-                # pass
-            print("Read from file:", last_line)
-            return last_line
+        print("Last Line =", last_line, end="")
+        return last_line
 
     # Else, init a new one and return that
     else:
+        print("Creating new file:", filename)
         file = open(filename, "w")
-        file.write("0, 1.0")
+        current_date, current_time = get_current_datetime()
+        out_string = "0,1.0," + current_date + "," + current_time + ",\n"
+        file.write(out_string)
         file.close()
-        return open(filename, "r")
+        return "0,0,0"
 
 
 def main():
@@ -419,8 +422,6 @@ def main():
 
         line = credentials.readline()
 
-    # print(creds_array)
-
     CONSUMER = creds_array[0]
     CONSUMER_SECRET = creds_array[1]
     ACCESS = creds_array[2]
@@ -430,16 +431,6 @@ def main():
     auth = tweepy.OAuthHandler(CONSUMER, CONSUMER_SECRET)
     auth.set_access_token(ACCESS, ACCESS_SECRET)
     api = tweepy.API(auth)
-
-    # Get current datetime tuple
-    current_datetime = get_current_datetime
-
-    # TODO: Account for time between actions
-    MINUTES_BETWEEN_ACTIONS = 12
-    TIME_BETWEEN_ACTIONS = MINUTES_BETWEEN_ACTIONS * 60
-    # TIME_BETWEEN_ACTIONS = 2.0
-
-
 
     # Establish Q Matrix
     q_matrix = []
@@ -453,18 +444,20 @@ def main():
     Create filename for file based on date/time of script init
     w/ relative path to sub-directory "reward_value_logs"
     '''
-    current_date, current_time = get_current_datetime()
-    action1_filename = log_file_path + current_date + "_" + current_time + "_" + "action1_reward_history.txt"
-    action2_filename = log_file_path + current_date + "_" + current_time + "_" + "action2_reward_history.txt"
-    action3_filename = log_file_path + current_date + "_" + current_time + "_" + "action3_reward_history.txt"
+
+    action1_filename = log_file_path + "action1_reward_history.csv"
+    action2_filename = log_file_path + "action2_reward_history.csv"
+    action3_filename = log_file_path + "action3_reward_history.csv"
 
     # Init other vars, begin actions:
     running = True
     action_type = 0
     action_filename = ""
-    q = 0
     trial = float(0)
     reward = 0
+
+    # TODO: Modify wait time
+    time_between_actions = 2
 
     while running:
         try:
@@ -499,18 +492,16 @@ def main():
                 action3_reward_history = read_or_init_reward_file(action3_filename)
 
                 # Extract avg reward values from each action
-                action1_reward_avg = float(action1_reward_history.readline().split(",")[1])
-                action2_reward_avg = float(action2_reward_history.readline().split(",")[1])
-                action3_reward_avg = float(action3_reward_history.readline().split(",")[1])
+                action1_reward_avg = float(action1_reward_history.split(",")[1])
+                action2_reward_avg = float(action2_reward_history.split(",")[1])
+                action3_reward_avg = float(action3_reward_history.split(",")[1])
 
-                # Close files
-                action1_reward_history.close()
-                action2_reward_history.close()
-                action3_reward_history.close()
-
+                # Get best action reward via max of rewards, print header
                 best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
+                print("---------------------------")
+
                 if best_action_reward == action1_reward_avg:
-                    print("Best action: 1, avg  reward:", best_action_reward)
+                    print("Best action: 1, avg reward:", best_action_reward)
                     action_type = 1
 
                 elif best_action_reward == action2_reward_avg:
@@ -520,8 +511,6 @@ def main():
                 elif best_action_reward == action3_reward_avg:
                     print("Best action: 3, avg reward:", best_action_reward)
                     action_type = 3
-
-            print("Action type:", action_type)
 
             '''
             Perform action 1 - 3
@@ -542,6 +531,9 @@ def main():
                 # action3_random_query(api)
                 action_filename = action3_filename
 
+            # Calc rewards AFTER pause
+            # TODO: Move pause here
+
             # Calculate reward avg
             calculate_reward_avg(action_filename, reward)
 
@@ -554,8 +546,8 @@ def main():
             # Increment trial count
             trial += 1
 
-            # TODO: Remove this
-            time.sleep(2)
+            # Pause between actions
+            time.sleep(time_between_actions)
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
