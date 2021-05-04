@@ -74,7 +74,7 @@ def action1_trending(api):
                 api.create_favorite(tweet.id)
                 print("Liking tweet:", tweet.text)
             except tweepy.TweepError as message:
-                print("Could not like tweet:", message)
+                print("Could not like tweet:", tweet.text, message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -84,7 +84,7 @@ def action1_trending(api):
                 api.retweet(tweet.id)
                 print("Retweeting:", tweet.text)
             except tweepy.TweepError as message:
-                print("Could not retweet tweet:", message)
+                print("Could not retweet tweet:", tweet.text, message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -176,7 +176,7 @@ def action2_following(api):
             api.create_favorite(tweet.id)
             print("Liking tweet:", tweet.text)
         except tweepy.TweepError as message:
-            print("Could not like tweet:", message)
+            print("Could not like tweet:", tweet.text, message)
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -186,7 +186,7 @@ def action2_following(api):
             api.retweet(tweet.id)
             print("Retweeting:", tweet.text)
         except tweepy.TweepError as message:
-            print("Could not retweet tweet:", message)
+            print("Could not retweet tweet:", tweet.text, message)
 
     # Close file
     following_archive.close()
@@ -240,7 +240,6 @@ def action3_random_query(api):
 
         # If not following yet, follow
         else:
-            print("Followed @", tweet.user.screen_name, sep="")
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -248,7 +247,7 @@ def action3_random_query(api):
             # Follow
             try:
                 api.create_friendship(tweet.user.id)
-                print("Followed @", tweet.user.screen_name)
+                print("Followed @", tweet.user.screen_name, sep="")
             except tweepy.TweepError as message:
                 print("Could not follow user:", tweet.user.screen_name, message)
 
@@ -260,7 +259,7 @@ def action3_random_query(api):
             api.create_favorite(tweet.id)
             print("Liking tweet:", tweet.text)
         except tweepy.TweepError as message:
-            print("Could not like tweet:", message)
+            print("Could not like tweet:", tweet.text, message)
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -270,7 +269,7 @@ def action3_random_query(api):
             api.retweet(tweet.id)
             print("Retweeting:", tweet.text)
         except tweepy.TweepError as message:
-            print("Could not retweet tweet:", message)
+            print("Could not retweet tweet:", tweet.text, message)
 
     # Close file
     following_archive.close()
