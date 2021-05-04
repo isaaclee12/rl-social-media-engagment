@@ -73,8 +73,8 @@ def action1_trending(api):
             try:
                 api.create_favorite(tweet.id)
                 print("Liking tweet:", tweet.text)
-            except:
-                print("Could not like tweet")
+            except tweepy.TweepError as message:
+                print("Could not like tweet:", message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -83,8 +83,8 @@ def action1_trending(api):
             try:
                 api.retweet(tweet.id)
                 print("Retweeting:", tweet.text)
-            except:
-                print("Could not retweet tweet")
+            except tweepy.TweepError as message:
+                print("Could not retweet tweet:", message)
 
             # Prevent Rate Limit
             time.sleep(SLEEP_TIME)
@@ -93,8 +93,8 @@ def action1_trending(api):
             try:
                 api.create_friendship(tweet.user.id)
                 print("Followed @", tweet.user.screen_name)
-            except:
-                print("Could not follow user")
+            except tweepy.TweepError as message:
+                print("Could not follow user:", tweet.user.screen_name, message)
 
 
 def action2_following(api):
@@ -156,8 +156,8 @@ def action2_following(api):
             try:
                 api.create_friendship(user.id)
                 print("Followed @", user.screen_name)
-            except:
-                print("Could not follow user")
+            except tweepy.TweepError as message:
+                print("Could not follow user:", user.screen_name, message)
 
     # Prevent Rate Limit
     time.sleep(SLEEP_TIME)
@@ -175,8 +175,8 @@ def action2_following(api):
         try:
             api.create_favorite(tweet.id)
             print("Liking tweet:", tweet.text)
-        except:
-            print("Could not like tweet")
+        except tweepy.TweepError as message:
+            print("Could not like tweet:", message)
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -185,8 +185,8 @@ def action2_following(api):
         try:
             api.retweet(tweet.id)
             print("Retweeting:", tweet.text)
-        except:
-            print("Could not retweet tweet")
+        except tweepy.TweepError as message:
+            print("Could not retweet tweet:", message)
 
     # Close file
     following_archive.close()
@@ -249,8 +249,8 @@ def action3_random_query(api):
             try:
                 api.create_friendship(tweet.user.id)
                 print("Followed @", tweet.user.screen_name)
-            except:
-                print("Could not follow user")
+            except tweepy.TweepError as message:
+                print("Could not follow user:", tweet.user.screen_name, message)
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -259,8 +259,8 @@ def action3_random_query(api):
         try:
             api.create_favorite(tweet.id)
             print("Liking tweet:", tweet.text)
-        except:
-            print("Could not like tweet")
+        except tweepy.TweepError as message:
+            print("Could not like tweet:", message)
 
         # Prevent Rate Limit
         time.sleep(SLEEP_TIME)
@@ -269,8 +269,8 @@ def action3_random_query(api):
         try:
             api.retweet(tweet.id)
             print("Retweeting:", tweet.text)
-        except:
-            print("Could not retweet tweet")
+        except tweepy.TweepError as message:
+            print("Could not retweet tweet:", message)
 
     # Close file
     following_archive.close()
@@ -398,7 +398,7 @@ def read_or_init_reward_file(filename):
         out_string = "0,1.0," + current_date + "," + current_time + ",\n"
         file.write(out_string)
         file.close()
-        return "0,0,0"
+        return "0,0,0,0,"
 
 
 def main():
@@ -475,6 +475,8 @@ def main():
 
                 action_type = random.randint(1, 3)
 
+                print("Action Type:", action_type)
+
             # if epsilon above threshold, do greedy
             elif epsilon <= epsilon_threshold:
 
@@ -528,6 +530,7 @@ def main():
                 action_filename = action3_filename
 
             # Calc rewards AFTER pause between actions
+            print("\nAction completed. Sleeping for", time_between_actions, "seconds.")
             time.sleep(time_between_actions)
 
             # Get reward based on change in num of twitter followers
