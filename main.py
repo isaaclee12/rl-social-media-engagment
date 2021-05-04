@@ -612,11 +612,12 @@ def calculate_reward_avg(action_filename, reward):
         action_reward_avg = ((action_reward_avg * action_count) + reward) / (action_count + 1)
         action_count += 1
 
-        # Write
+        # Append File
         reward_history.close()
-        reward_history = open(action_filename, "w")
+        reward_history = open(action_filename, "a")
 
         out_string = str(action_count) + "," + str(action_reward_avg)
+        print("Writing to file:", out_string)
         reward_history.write(out_string)
         reward_history.close()
 
@@ -627,6 +628,37 @@ def calculate_reward_avg(action_filename, reward):
         reward_history.close()
 
     return
+
+
+def read_or_init_reward_file(filename):
+    '''
+    return "read file" var if file exists
+    init file if it does not yet exist
+    '''
+
+    # If file exists, open it
+    path = "reward_value_logs/" + filename
+    if os.path.isfile(path):
+
+        # Return the last line in the file
+        with open(filename, 'rb') as file:
+
+            file.seek(-2, os.SEEK_END)
+            while file.read(1) != b'\n':
+                file.seek(-2, os.SEEK_CUR)
+            last_line = file.readline().decode()
+
+            # for line in file:
+                # pass
+            print("Read from file:", last_line)
+            return last_line
+
+    # Else, init a new one and return that
+    else:
+        file = open(filename, "w")
+        file.write("0, 1.0")
+        file.close()
+        return open(filename, "r")
 
 
 def main():
@@ -685,18 +717,28 @@ def main():
     w/ relative path to sub-directory "reward_value_logs"
     '''
     current_date, current_time = get_current_datetime()
-    action1_filename = log_file_path + "action1_reward_history_" + current_date + "_" + current_time
-    action2_filename = log_file_path + "action2_reward_history_" + current_date + "_" + current_time
-    action3_filename = log_file_path + "action3_reward_history_" + current_date + "_" + current_time
+    action1_filename = log_file_path + current_date + "_" + current_time + "_" + "action1_reward_history.txt"
+    action2_filename = log_file_path + current_date + "_" + current_time + "_" + "action2_reward_history.txt"
+    action3_filename = log_file_path + current_date + "_" + current_time + "_" + "action3_reward_history.txt"
 
     # Init current followers via get_rewards()
-    get_rewards(api)
+    # TODO: Clean this up
+    # reward = -10000
+    # while reward == -10000:
+    #     try:
+    #         reward = get_rewards(api)
+    #     except tweepy.RateLimitError:
+    #         print("Rate limited. Sleeping for 5 minutes.")
+    #         time.sleep(5 * 60)
+
 
     # Init other vars, begin actions:
     running = True
     action_type = 0
     action_filename = ""
     q = 0
+    trial = float(0)
+    reward = 0
 
     while running:
         try:
@@ -708,6 +750,7 @@ def main():
             epsilon = random.random()
 
             # Print epsilon
+            print("\n------------------------------\nTrial:", trial)
             print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
 
             # if epsilon below threshold, do random
@@ -717,25 +760,23 @@ def main():
             # TODO: Every action should have a Q value associated with it **** THIS ONE THIS ONE THIS ONE
             # Ben Caruso and Caleb Williams
 
-            if epsilon < epsilon_threshold:
+            if epsilon > epsilon_threshold:
 
                 print("Random (Exploration) Action")
 
                 action_type = random.randint(1, 3)
 
             # if epsilon above threshold, do greedy
-            elif epsilon >= epsilon_threshold:
+            elif epsilon <= epsilon_threshold:
 
                 print("Greedy (Exploitation) Action")
 
                 # Read files
 
                 # If reward file already exists, read in data
-                path = "reward_value_logs/" + action1_filename
-                if os.path.isfile(path):
-                action1_reward_history = open(action1_filename, "r")
-                action2_reward_history = open(action2_filename, "r")
-                action3_reward_history = open(action3_filename, "r")
+                action1_reward_history = read_or_init_reward_file(action1_filename)
+                action2_reward_history = read_or_init_reward_file(action2_filename)
+                action3_reward_history = read_or_init_reward_file(action3_filename)
 
                 # Extract avg reward values from each action
                 action1_reward_avg = float(action1_reward_history.readline().split(",")[1])
@@ -807,7 +848,8 @@ def main():
             # reward = get_rewards(api)
 
             # Get reward
-            reward = get_rewards(api)
+            # TODO: Uncomment once un-rate-limited
+            # reward = get_rewards(api)
 
             # Calculate reward avg
             calculate_reward_avg(action_filename, reward)
@@ -827,6 +869,15 @@ def main():
 
             q_matrix.append(a)
             q_matrix.append(q)
+
+            # Debug
+            print(q_matrix)
+
+            # Increment trial count
+            trial += 1
+
+            # TODO: Remove this
+            time.sleep(2)
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
