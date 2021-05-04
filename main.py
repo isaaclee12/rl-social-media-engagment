@@ -454,7 +454,8 @@ def main():
     trial = float(0)
 
     # TODO: Modify wait time
-    time_between_actions = 5 * 60
+    # Currently: Every 20 minutes, i.e. 3 actions per hour.
+    time_between_actions = 20 * 60
 
     while running:
         try:
@@ -546,11 +547,10 @@ def main():
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
 
-            minutes_to_sleep = 5
+            minutes_to_sleep = 20
             print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
 
             # Write rate limit to file
-
             rate_limit_log = open("rate_limit_log.txt", "a")
             time_of_rate_limit = get_current_datetime()
             out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
@@ -564,8 +564,16 @@ def main():
         # Catch all for all other errors
         except:
 
-            minutes_to_sleep = 5
+            minutes_to_sleep = 20
             print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
+
+            # Write error to log file
+            rate_limit_log = open("rate_limit_log.txt", "a")
+            time_of_rate_limit = get_current_datetime()
+            out_string = "Unknown error at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
+            print(out_string)
+            rate_limit_log.write(out_string)
+            rate_limit_log.close()
 
             # Sleep for 5 minutes
             time.sleep(minutes_to_sleep * 60)
