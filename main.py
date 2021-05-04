@@ -432,9 +432,6 @@ def main():
     auth.set_access_token(ACCESS, ACCESS_SECRET)
     api = tweepy.API(auth)
 
-    # Establish Q Matrix
-    q_matrix = []
-
     # Initialize files
     path = os.path.dirname(__file__)
     sub_dir = "reward_value_logs\\"
@@ -454,10 +451,9 @@ def main():
     action_type = 0
     action_filename = ""
     trial = float(0)
-    reward = 0
 
     # TODO: Modify wait time
-    time_between_actions = 2
+    time_between_actions = 5 * 60
 
     while running:
         try:
@@ -469,7 +465,7 @@ def main():
             epsilon = random.random()
 
             # Print epsilon
-            print("\n------------------------------\nTrial:", trial)
+            print("\n------------------------------\nTrial:", int(trial))
             print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
 
             # if epsilon below threshold, do random
@@ -518,36 +514,30 @@ def main():
             '''
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
-                # action1_trending(api)
+                action1_trending(api)
                 action_filename = action1_filename
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
-                # action2_following(api)
+                action2_following(api)
                 action_filename = action2_filename
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
-                # action3_random_query(api)
+                action3_random_query(api)
                 action_filename = action3_filename
 
-            # Calc rewards AFTER pause
-            # TODO: Move pause here
+            # Calc rewards AFTER pause between actions
+            time.sleep(time_between_actions)
+
+            # Get reward based on change in num of twitter followers
+            reward = get_rewards(api)
 
             # Calculate reward avg
             calculate_reward_avg(action_filename, reward)
 
-            # Calculate n
-            if len(q_matrix) > 0:
-                n = len(q_matrix)
-            else:
-                n = 1
-
             # Increment trial count
             trial += 1
-
-            # Pause between actions
-            time.sleep(time_between_actions)
 
         # Sleeps the agent for 5 minutes when rate limited
         except tweepy.RateLimitError:
