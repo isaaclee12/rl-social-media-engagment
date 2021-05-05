@@ -498,8 +498,8 @@ def main():
     trial = float(0)
 
     # TODO: Modify wait time
-    # Currently: Every 5 minutes, i.e. 3 actions per hour.
-    time_between_actions = 5 * 60
+    # Currently: Every 10 minutes, i.e. 6 actions per hour.
+    time_between_actions = 10 * 60
 
     # Init followers list
     initialized_follower_list = False
@@ -623,17 +623,17 @@ def main():
             #Set action_filename respective to that action
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
-                # action1_trending(api)
+                action1_trending(api)
                 action_filename = action1_filename
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
-                # action2_following(api)
+                action2_following(api)
                 action_filename = action2_filename
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
-                # action3_random_query(api)
+                action3_random_query(api)
                 action_filename = action3_filename
 
             # Calc rewards AFTER pause between actions

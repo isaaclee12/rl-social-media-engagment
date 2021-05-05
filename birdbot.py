@@ -498,7 +498,7 @@ def main():
     trial = float(0)
 
     # TODO: Modify wait time
-    # Currently: Every 5 minutes, i.e. 3 actions per hour.
+    # Currently: Every 5 minutes, i.e. 12 actions per hour.
     time_between_actions = 5 * 60
 
     # Init followers list
