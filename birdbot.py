@@ -522,6 +522,25 @@ def main():
             print("\n------------------------------\nTrial:", int(trial))
             print("Epsilon:", round(epsilon, 5), "Threshold", epsilon_threshold)
 
+            # Read files to get award avg data
+
+            # If reward file already exists, read in data
+            action1_reward_history = read_or_init_reward_file(action1_filename)
+            action2_reward_history = read_or_init_reward_file(action2_filename)
+            action3_reward_history = read_or_init_reward_file(action3_filename)
+
+            # Extract avg reward values from each action
+            action1_reward_avg = float(action1_reward_history.split(",")[1])
+            action2_reward_avg = float(action2_reward_history.split(",")[1])
+            action3_reward_avg = float(action3_reward_history.split(",")[1])
+
+            # action_reward_list = 0, action1_reward_avg, action2_reward_avg, action3_reward_avg
+
+            # if any are equal, choose a random amongst matches
+            if action1_reward_avg == action2_reward_avg:
+            if action2_reward_avg == action3_reward_avg:
+            if action1_reward_avg == action3_reward_avg:
+
             # if epsilon below threshold, do random
             if epsilon > epsilon_threshold:
 
@@ -535,18 +554,6 @@ def main():
             elif epsilon <= epsilon_threshold:
 
                 print("Greedy (Exploitation) Action")
-
-                # Read files
-
-                # If reward file already exists, read in data
-                action1_reward_history = read_or_init_reward_file(action1_filename)
-                action2_reward_history = read_or_init_reward_file(action2_filename)
-                action3_reward_history = read_or_init_reward_file(action3_filename)
-
-                # Extract avg reward values from each action
-                action1_reward_avg = float(action1_reward_history.split(",")[1])
-                action2_reward_avg = float(action2_reward_history.split(",")[1])
-                action3_reward_avg = float(action3_reward_history.split(",")[1])
 
                 # Get best action reward via max of rewards, print header
                 best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
