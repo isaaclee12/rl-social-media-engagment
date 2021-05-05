@@ -539,21 +539,71 @@ def main():
                 action2_reward_avg = float(action2_reward_history.split(",")[1])
                 action3_reward_avg = float(action3_reward_history.split(",")[1])
 
-                # Get best action reward via max of rewards, print header
-                best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
-                print("---------------------------")
+                # List these items for ease of code readability
+                action_reward_avg_list = 0,action1_reward_avg,action2_reward_avg,action3_reward_avg
 
-                if best_action_reward == action1_reward_avg:
-                    print("Best action: 1, avg reward:", best_action_reward)
-                    action_type = 1
+                # Account for matches
+                # If all actions 1 thru 3 have the same avg:
+                if action1_reward_avg == action2_reward_avg and action2_reward_avg == action3_reward_avg:
 
-                elif best_action_reward == action2_reward_avg:
-                    print("Best action: 2, avg reward:", best_action_reward)
-                    action_type = 2
+                    # Choose random between them
+                    print("Actions 1, 2, and 3 are equal maxes")
 
-                elif best_action_reward == action3_reward_avg:
-                    print("Best action: 3, avg reward:", best_action_reward)
-                    action_type = 3
+                    action_type = random.randint(1, 3)
+
+                    print("Action Type:", action_type, "Reward:", action_reward_avg_list[action_type])
+
+                # If actions 1 and 2 have equal averages greater than action 3's
+                if action1_reward_avg == action2_reward_avg and action1_reward_avg > action3_reward_avg:
+
+                    # Choose random between them
+                    print("Actions 1 and 2 are equal maxes")
+
+                    action_type = random.randint(1, 2)
+
+                    print("Action Type:", action_type, "Reward:", action_reward_avg_list[action_type])
+
+                # If actions 2 and 3 have equal averages greater than action 1's
+                if action2_reward_avg == action3_reward_avg and action2_reward_avg > action1_reward_avg:
+
+                    # Choose random between them
+                    print("Actions 2 and 3 are equal maxes")
+
+                    action_type = random.randint(2, 3)
+
+                    print("Action Type:", action_type, "Reward:", action_reward_avg_list[action_type])
+
+                # If actions 1 and 3 have equal averages greater than action 2's
+                if action1_reward_avg == action3_reward_avg and action3_reward_avg > action2_reward_avg:
+
+                    # Choose random between them
+                    print("Actions 1 and 3 are equal maxes")
+
+                    action_type = random.randint(1, 2)
+
+                    # randint chooses 1 or 2, but we want action 3 so we turn that "2" into a "3"
+                    if action_type == 2:
+                        action_type = 3
+
+                    print("Action Type:", action_type, "Reward:", action_reward_avg_list[action_type])
+
+                # If no matching maxes, choose maximum from list:
+                else:
+                    # Get best action reward via max of rewards, print header
+                    best_action_reward = max(action1_reward_avg, action2_reward_avg, action3_reward_avg)
+                    print("---------------------------")
+
+                    if best_action_reward == action1_reward_avg:
+                        print("Best action: 1, avg reward:", best_action_reward)
+                        action_type = 1
+
+                    elif best_action_reward == action2_reward_avg:
+                        print("Best action: 2, avg reward:", best_action_reward)
+                        action_type = 2
+
+                    elif best_action_reward == action3_reward_avg:
+                        print("Best action: 3, avg reward:", best_action_reward)
+                        action_type = 3
 
             '''
             Perform action 1 - 3
