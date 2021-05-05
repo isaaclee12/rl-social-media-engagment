@@ -292,7 +292,7 @@ def get_rewards(api):
     '''
 
     # Get list of known followers from txt
-    followers_file = open("followers_birdbot.txt", "r")
+    followers_file = open("followers_fishbot.txt", "r")
     followers_array = []
 
     line = followers_file.readline()
@@ -406,7 +406,7 @@ def read_or_init_reward_file(filename):
 
 def init_followers_list(api):
 
-    filename = "followers_birdbot.txt"
+    filename = "followers_fishbot.txt"
     with open(filename, "w") as file:
 
         # Prevent rate limit
@@ -448,7 +448,7 @@ def main():
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
 
     # IMPORTANT: Keep secret user keys in separate file
-    credentials = open("credentials_birdbot.txt", "r")
+    credentials = open("credentials_fishbot.txt", "r")
     creds_array = []
 
     line = credentials.readline()
@@ -485,9 +485,9 @@ def main():
     w/ relative path to sub-directory "reward_value_logs"
     '''
 
-    action1_filename = log_file_path + "birdbot_action1_reward_history.csv"
-    action2_filename = log_file_path + "birdbot_action2_reward_history.csv"
-    action3_filename = log_file_path + "birdbot_action3_reward_history.csv"
+    action1_filename = log_file_path + "fishbot_action1_reward_history.csv"
+    action2_filename = log_file_path + "fishbot_action2_reward_history.csv"
+    action3_filename = log_file_path + "fishbot_action3_reward_history.csv"
     print(action1_filename)
 
     # Init other vars, begin actions:
@@ -505,7 +505,9 @@ def main():
     initialized_follower_list = False
     while not initialized_follower_list:
         try:
-            initialized_follower_list = init_followers_list(api)
+            #TODO: please uncomment once doing full run
+            initialized_follower_list = True
+            # initialized_follower_list = init_followers_list(api)
 
         # Sleeps the agent for when rate limited
         except tweepy.RateLimitError:
@@ -621,17 +623,17 @@ def main():
             #Set action_filename respective to that action
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
-                action1_trending(api)
+                # action1_trending(api)
                 action_filename = action1_filename
 
             elif action_type == 2:
                 # Action Type 2: Action is based on someone the bot is following
-                action2_following(api)
+                # action2_following(api)
                 action_filename = action2_filename
 
             elif action_type == 3:
                 # Action Type 3: Action is based on random search query
-                action3_random_query(api)
+                # action3_random_query(api)
                 action_filename = action3_filename
 
             # Calc rewards AFTER pause between actions
