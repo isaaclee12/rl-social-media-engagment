@@ -138,6 +138,7 @@ credentials3.txt
 credentials_dogbot.txt
 credentials_catbot.txt
 credentials_birdbot.txt
+credentials_fishbot.txt
 placeholder_data_generator.py
 rate_limit_log.txt
 linear-bandits.py

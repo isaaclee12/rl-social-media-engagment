@@ -68,8 +68,6 @@ def action1_trending(api):
         # Print resulting tweets for this trend
         for tweet in search_results:
 
-            print(tweet)
-
             # Like
             try:
                 api.create_favorite(tweet.id)
@@ -409,19 +407,38 @@ def init_followers_list(api):
     filename = "followers_birdbot.txt"
     with open(filename, "w") as file:
 
+        # Prevent rate limit
+        time.sleep(SLEEP_TIME)
+
         follower_list = api.followers()
-        print(follower_list)
+        # print(follower_list)
 
         # If no followers, close it
         if len(follower_list) < 1:
             file.close()
-            return
+            return True
 
         # If at least one follower, add followers to follower list, one per line
         for follower in follower_list:
             file.write(follower.screen_name + "\n")
 
-    return
+    return True
+
+
+def log_rate_limit():
+    minutes_to_sleep = 20
+    print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
+
+    # Write rate limit to file
+    rate_limit_log = open("rate_limit_log.txt", "a")
+    time_of_rate_limit = get_current_datetime()
+    out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
+    print(out_string)
+    rate_limit_log.write(out_string)
+    rate_limit_log.close()
+
+    # Sleep for 5 minutes
+    time.sleep(minutes_to_sleep * 60)
 
 
 def main():
@@ -482,8 +499,15 @@ def main():
     # Currently: Every 5 minutes, i.e. 3 actions per hour.
     time_between_actions = 5 * 60
 
-    # Init followers
-    init_followers_list(api)
+    # Init followers list
+    initialized_follower_list = False
+    while not initialized_follower_list:
+        try:
+            initialized_follower_list = init_followers_list(api)
+
+        # Sleeps the agent for when rate limited
+        except tweepy.RateLimitError:
+            log_rate_limit()
 
     while running:
         try:
@@ -570,22 +594,9 @@ def main():
             # Increment trial count
             trial += 1
 
-        # Sleeps the agent for 5 minutes when rate limited
+        # Sleeps the agent for when rate limited
         except tweepy.RateLimitError:
-
-            minutes_to_sleep = 20
-            print("You are being rate limited. Sleeping for,", minutes_to_sleep, "minutes.")
-
-            # Write rate limit to file
-            rate_limit_log = open("rate_limit_log.txt", "a")
-            time_of_rate_limit = get_current_datetime()
-            out_string = "Rate limited at: " + time_of_rate_limit[0] + " " + time_of_rate_limit[1]
-            print(out_string)
-            rate_limit_log.write(out_string)
-            rate_limit_log.close()
-
-            # Sleep for 5 minutes
-            time.sleep(minutes_to_sleep * 60)
+            log_rate_limit()
 
         # Catch all for all other errors
         except:
