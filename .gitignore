@@ -134,6 +134,10 @@ dmypy.json
 
 credentials.txt
 credentials2.txt
+credentials3.txt
+credentials_dogbot.txt
+credentials_catbot.txt
+credentials_birdbot.txt
 placeholder_data_generator.py
 rate_limit_log.txt
 linear-bandits.py

@@ -291,7 +291,8 @@ def get_rewards(api):
         reward = diff. in followers since last action
     '''
 
-    followers_file = open("followers_catbot.txt", "r")
+    # Get list of known followers from txt
+    followers_file = open("followers_birdbot.txt", "r")
     followers_array = []
 
     line = followers_file.readline()
@@ -316,10 +317,12 @@ def get_rewards(api):
         # Reset follower txt
         # Overwrite file
         followers_file.close()
-        followers_file = open("followers_catbot.txt", "w")
+        followers_file = open("followers.txt", "w")
 
         for follower in followers:
             followers_file.write(follower.screen_name + "\n")
+
+        followers_file.close()
 
         return reward
 
@@ -403,7 +406,7 @@ def read_or_init_reward_file(filename):
 
 def init_followers_list(api):
 
-    filename = "followers_catbot.txt"
+    filename = "followers_birdbot.txt"
     with open(filename, "w") as file:
 
         follower_list = api.followers()
@@ -424,8 +427,9 @@ def init_followers_list(api):
 def main():
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
+
     # IMPORTANT: Keep secret user keys in separate file
-    credentials = open("credentials_catbot.txt", "r")
+    credentials = open("credentials_birdbot.txt", "r")
     creds_array = []
 
     line = credentials.readline()
@@ -462,19 +466,24 @@ def main():
     w/ relative path to sub-directory "reward_value_logs"
     '''
 
-    action1_filename = log_file_path + "catbot_action1_reward_history.csv"
-    action2_filename = log_file_path + "catbot_action2_reward_history.csv"
-    action3_filename = log_file_path + "catbot_action3_reward_history.csv"
+    action1_filename = log_file_path + "birdbot_action1_reward_history.csv"
+    action2_filename = log_file_path + "birdbot_action2_reward_history.csv"
+    action3_filename = log_file_path + "birdbot_action3_reward_history.csv"
+    print(action1_filename)
 
     # Init other vars, begin actions:
+    # TODO: Set to false if playing with stuff
     running = True
     action_type = 0
     action_filename = ""
     trial = float(0)
 
     # TODO: Modify wait time
-    # Currently: Every 20 minutes, i.e. 3 actions per hour.
-    time_between_actions = 20 * 60
+    # Currently: Every 5 minutes, i.e. 3 actions per hour.
+    time_between_actions = 5 * 60
+
+    # Init followers
+    init_followers_list(api)
 
     while running:
         try:
@@ -487,7 +496,7 @@ def main():
 
             # Print epsilon
             print("\n------------------------------\nTrial:", int(trial))
-            print("Epsilon:", epsilon, "Threshold", epsilon_threshold)
+            print("Epsilon:", round(epsilon, 5), "Threshold", epsilon_threshold)
 
             # if epsilon below threshold, do random
             if epsilon > epsilon_threshold:
@@ -531,10 +540,8 @@ def main():
                     print("Best action: 3, avg reward:", best_action_reward)
                     action_type = 3
 
-            '''
-            Perform action 1 - 3
-            Set action_filename respective to that action
-            '''
+            # Perform action 1 - 3
+            #Set action_filename respective to that action
             if action_type == 1:
                 # Action Type 1: Action is based on tweets on trending topics
                 action1_trending(api)

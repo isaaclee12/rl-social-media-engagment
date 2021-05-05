@@ -291,7 +291,8 @@ def get_rewards(api):
         reward = diff. in followers since last action
     '''
 
-    followers_file = open("followers.txt", "r")
+    # Get list of known followers from txt
+    followers_file = open("followers_dogbot.txt", "r")
     followers_array = []
 
     line = followers_file.readline()
@@ -316,7 +317,7 @@ def get_rewards(api):
         # Reset follower txt
         # Overwrite file
         followers_file.close()
-        followers_file = open("followers.txt", "w")
+        followers_file = open("followers_dogbot.txt", "w")
 
         for follower in followers:
             followers_file.write(follower.screen_name + "\n")
@@ -403,11 +404,33 @@ def read_or_init_reward_file(filename):
         return "0,0,0,0,"
 
 
+def init_followers_list(api):
+
+    filename = "followers_dogbot.txt"
+    with open(filename, "w") as file:
+
+        follower_list = api.followers()
+        print(follower_list)
+
+        # If no followers, close it
+        if len(follower_list) < 1:
+            file.close()
+            return
+
+        # If at least one follower, add followers to follower list, one per line
+        for follower in follower_list:
+            file.write(follower.screen_name + "\n")
+
+    return
+
+
 def main():
 
     # TODO: Remove "following.txt" aspect. It is useless and less reliable than a straight query of followers.
+
+
     # IMPORTANT: Keep secret user keys in separate file
-    credentials = open("credentials.txt", "r")
+    credentials = open("credentials_dogbot.txt", "r")
     creds_array = []
 
     line = credentials.readline()
